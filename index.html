@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Hafal Juz Amma</title>
+<meta name="description" content="Hafalkan Juz 30 dengan murottal berulang, rekam dan bandingkan bacaan, serta jadwal muraja'ah.">
+<meta name="theme-color" content="#EFF4F1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1614" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Juz Amma">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Figtree:wght@400;500;600;700&family=Literata:wght@500;700&display=swap">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+[hidden]{display:none!important}
+
+/* Layout: one calm reading column (680px max). Surat list or Hari ini on top, ayat as ruled rows with large Arabic,
+   and a fixed transport bar at the bottom while a session is running. Pine green is the only accent. */
+:root{
+  --bg:#EFF4F1; --surface:#FBFDFC; --surface-2:#E3EBE7; --ink:#13211D; --muted:#4B5D55; --line:#CBD8D2;
+  --accent:#1D5B4C; --accent-ink:#FFFFFF; --accent-soft:#D6E9E1;
+  --ok:#2A7554; --ok-soft:#D7EDE1; --due:#8F5409; --due-soft:#F5E6C6; --bad:#A23B2A;
+  --font-ui:'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-display:'Literata',Georgia,'Times New Roman',serif;
+  --font-ar:'Amiri Quran','Scheherazade New','Noto Naskh Arabic','Traditional Arabic',serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1614; --surface:#152320; --surface-2:#1C2D29; --ink:#E7F0ED; --muted:#A5B8B0; --line:#2A3C37;
+    --accent:#67C2A6; --accent-ink:#0B1A16; --accent-soft:#1D3A32;
+    --ok:#6FCB9E; --ok-soft:#1B3A2D; --due:#E3B055; --due-soft:#3A2D12; --bad:#EE8F7D;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1614; --surface:#152320; --surface-2:#1C2D29; --ink:#E7F0ED; --muted:#A5B8B0; --line:#2A3C37;
+  --accent:#67C2A6; --accent-ink:#0B1A16; --accent-soft:#1D3A32;
+  --ok:#6FCB9E; --ok-soft:#1B3A2D; --due:#E3B055; --due-soft:#3A2D12; --bad:#EE8F7D;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-ui);font-size:16px;line-height:1.5}
+.wrap{max-width:680px;margin:0 auto;padding-block:20px 150px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;font-weight:700}
+h1{font-size:1.8rem;line-height:1.15;letter-spacing:-.01em}
+h2{font-size:1.2rem;line-height:1.25}
+p{margin:0}
+.sub{color:var(--muted);margin-top:6px;max-width:46ch}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,select:focus-visible,.txt:focus-visible,summary:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.tabs{display:flex;gap:4px;background:var(--surface-2);padding:4px;border-radius:12px;margin:20px 0 18px}
+.tabs button{flex:1;border:0;background:transparent;padding:10px 12px;border-radius:9px;font-weight:600;color:var(--muted);min-height:44px}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);outline:1px solid var(--line)}
+.badge{display:inline-block;min-width:1.5em;padding:0 .45em;border-radius:999px;background:var(--due-soft);color:var(--due);font-size:.8rem;font-variant-numeric:tabular-nums}
+
+.btn{border:1px solid transparent;border-radius:12px;padding:12px 18px;font-weight:700;min-height:48px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn.quiet{background:var(--surface-2);border-color:var(--line)}
+.btn.small{min-height:40px;padding:8px 14px;font-weight:600;font-size:.92rem}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;min-height:40px;font-weight:500}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+
+/* Hari ini */
+.sum{display:grid;gap:10px;margin-bottom:20px}
+.big{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.bignum{font-family:var(--font-display);font-size:2.6rem;line-height:1;font-weight:700;font-variant-numeric:tabular-nums}
+.bigtxt{color:var(--muted)}
+.meter{display:block;height:8px;border-radius:999px;background:var(--surface-2);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--ok);border-radius:999px}
+.empty{border:1px dashed var(--line);border-radius:14px;padding:20px;display:grid;gap:10px;justify-items:start}
+.empty p{color:var(--muted);max-width:52ch}
+.sec{margin:8px 0 12px}
+.grps{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.grp{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:12px}
+.grp strong{font-weight:700}
+.gmeta{display:block;color:var(--due);font-size:.9rem;margin-top:2px}
+.gbtns{display:flex;flex-wrap:wrap;gap:8px}
+.note{color:var(--muted);font-size:.92rem;margin-top:22px;max-width:56ch}
+details.backup{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+details.backup summary{cursor:pointer;font-weight:600}
+details.backup p{color:var(--muted);font-size:.92rem;margin:10px 0}
+textarea{width:100%;min-height:92px;font:inherit;font-size:.85rem;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px;resize:vertical}
+.rowbtns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+
+/* Surat */
+.sortbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.sortbar span{color:var(--muted);font-size:.9rem;margin-right:2px}
+.slist{list-style:none;margin:0;padding:0}
+.srow{width:100%;text-align:left;background:transparent;border:0;border-top:1px solid var(--line);padding:14px 4px;display:grid;
+  grid-template-columns:2.4rem minmax(0,1fr) auto;grid-template-areas:"n name ar" "n prog prog";column-gap:12px;row-gap:8px;align-items:center}
+.sn{grid-area:n;font-variant-numeric:tabular-nums;color:var(--muted);font-weight:600;text-align:center}
+.sm{grid-area:name;min-width:0}
+.sname{display:block;font-weight:700}
+.smeta{display:block;color:var(--muted);font-size:.9rem}
+.sar{grid-area:ar;font-family:var(--font-ar);font-size:1.5rem;line-height:1.6}
+.sprog{grid-area:prog;display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.85rem;font-variant-numeric:tabular-nums}
+.sprog .meter{flex:1}
+.srow:hover{background:var(--surface-2)}
+
+/* Surat terbuka */
+.back{display:inline-flex;align-items:center;gap:6px;border:0;background:transparent;color:var(--accent);font-weight:600;padding:8px 6px 8px 0;min-height:44px}
+.shead{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin:4px 0 16px}
+.shead .sar2{font-family:var(--font-ar);font-size:2.4rem;line-height:1.5}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:18px}
+.field{display:grid;gap:8px;min-width:0}
+.field>label,.field>.lab{font-size:.78rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+select{font:inherit;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-height:44px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.desc{color:var(--muted);font-size:.92rem;max-width:56ch}
+.stepper{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.stepper .sq{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);font-size:1.3rem;font-weight:700;line-height:1}
+.stepper output{min-width:2.2ch;text-align:center;font-weight:700;font-size:1.35rem;font-variant-numeric:tabular-nums}
+.plan{font-size:.92rem;color:var(--muted)}
+.plan.long{color:var(--due)}
+.go{display:flex;gap:10px;flex-wrap:wrap}
+.go .btn.primary{flex:1;min-width:10rem}
+.layers{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:20px 0 4px}
+.layers .lab{font-size:.78rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-right:4px}
+.prog{display:grid;gap:6px;margin:0 0 14px}
+.prog .txt2{color:var(--muted);font-size:.92rem;font-variant-numeric:tabular-nums}
+
+.rows{list-style:none;margin:12px 0 0;padding:0}
+.row{padding:16px 12px 18px;border-top:1px solid var(--line)}
+.row.now{background:var(--accent-soft)}
+.rowhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.num{min-width:2.2rem;height:2.2rem;border:1px solid var(--line);border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.row.hafal .num{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.mem[aria-pressed="true"]{background:var(--ok-soft);color:var(--ok);border-color:var(--ok);font-weight:700}
+.ar{font-family:var(--font-ar);font-size:clamp(1.7rem,6.6vw,2.2rem);line-height:2.15;direction:rtl;text-align:right;margin:0}
+.tl{font-style:italic;color:var(--muted);margin-top:4px}
+.idn{margin-top:4px}
+.txt{border-radius:8px}
+.try{margin-top:12px;padding:14px;border:1px dashed var(--line);border-radius:12px;display:grid;gap:10px;background:var(--surface)}
+.try .rowbtns{margin-top:0}
+.try .desc{font-size:.9rem}
+.try .msg{font-size:.92rem;min-height:1.4em}
+.btn.recording{background:var(--bad);color:var(--accent-ink);border-color:var(--bad)}
+.dot{width:10px;height:10px;border-radius:50%;background:currentColor;display:inline-block}
+.rows.hide-ar .row:not(.peek) .ar{display:none}
+.rows.hide-tl .row:not(.peek) .tl{display:none}
+.rows.hide-id .row:not(.peek) .idn{display:none}
+.rows.hide-ar.hide-tl.hide-id .row:not(.peek) .txt::before{content:"Teks disembunyikan. Ketuk untuk melihat.";color:var(--muted);font-size:.92rem;display:block;padding:10px 0}
+.rows[class*="hide-"] .txt{cursor:pointer}
+
+/* Transport bar */
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);z-index:5;
+  padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.bar-in{max-width:680px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.barText{flex:1;min-width:0;text-align:left;border:0;background:transparent;padding:6px 0;font-weight:600;line-height:1.3}
+.barText small{display:block;color:var(--muted);font-weight:400;font-size:.85rem}
+.bar-btns{display:flex;gap:6px}
+.ib{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--surface-2);display:grid;place-items:center}
+.ib.main{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.barErr{max-width:680px;margin:6px auto 0;color:var(--bad);font-size:.9rem}
+.barErr:empty{display:none}
+@media (prefers-reduced-motion:no-preference){.row{transition:background .2s}}
+@media (max-width:380px){.ib{width:42px;height:42px}.pair{grid-template-columns:1fr}}
+</style>
+
+</head>
+<body>
+<div class="wrap"><div id="app"></div></div>
+
+<div class="bar" id="bar" hidden>
+  <div class="bar-in">
+    <button class="barText" id="barText" data-act="openPlaying" type="button"></button>
+    <div class="bar-btns">
+      <button class="ib" data-act="pPrev" type="button" aria-label="Sebelumnya"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 5h2v14H6zM20 5v14L9 12z" fill="currentColor"/></svg></button>
+      <button class="ib main" id="barToggle" data-act="pToggle" type="button" aria-label="Jeda"></button>
+      <button class="ib" data-act="pNext" type="button" aria-label="Berikutnya"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M16 5h2v14h-2zM4 5v14l11-7z" fill="currentColor"/></svg></button>
+      <button class="ib" data-act="pStop" type="button" aria-label="Berhenti"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5" fill="currentColor"/></svg></button>
+    </div>
+  </div>
+  <p class="barErr" id="barErr" role="status"></p>
+</div>
+
+<script>
+const DATA=[{"n":78,"ar":"النبإ","tr":"An-Naba","id":"Berita Besar","v":[["عَمَّ يَتَسَآءَلُونَ","'amma yatasaaloona","Tentang apakah mereka saling bertanya-tanya"],["عَنِ ٱلنَّبَإِ ٱلۡعَظِيمِ","'ani alnnabai al'atheemi","Tentang berita yang besar (hari berbangkit)"],["ٱلَّذِي هُمۡ فِيهِ مُخۡتَلِفُونَ","Allathee hum feehi mukhtalifoona","yang dalam hal itu mereka berselisih"],["كَلَّا سَيَعۡلَمُونَ","Kalla saya'lamoona","(Tidak!892) Kelak mereka akan mengetahui"],["ثُمَّ كَلَّا سَيَعۡلَمُونَ","Thumma kalla saya'lamoona","sekali lagi tidak! Kelak mereka akan mengetahui"],["أَلَمۡ نَجۡعَلِ ٱلۡأَرۡضَ مِهَٰدٗا","Alam naj'ali alarda mihadan","Bukankah Kami telah menjadikan bumi sebagai hamparan"],["وَٱلۡجِبَالَ أَوۡتَادٗا","Waaljibala awtadan","dan gunung-gunung sebagai pasak"],["وَخَلَقۡنَٰكُمۡ أَزۡوَٰجٗا","Wakhalaqnakum azwajan","Dan Kami menciptakan kamu berpasang-pasangan"],["وَجَعَلۡنَا نَوۡمَكُمۡ سُبَاتٗا","Waja'alna nawmakum subatan","dan Kami menjadikan tidurmu untuk istirahat"],["وَجَعَلۡنَا ٱلَّيۡلَ لِبَاسٗا","Waja'alna allayla libasan","dan Kami menjadikan malam sebagai pakaian"],["وَجَعَلۡنَا ٱلنَّهَارَ مَعَاشٗا","Waja'alna alnnahara ma'ashan","dan Kami menjadikan siang untuk mencari penghidupan"],["وَبَنَيۡنَا فَوۡقَكُمۡ سَبۡعٗا شِدَادٗا","Wabanayna fawqakum sab'an shidadan","dan Kami membangun di atas kamu tujuh (lapis langit) yang kokoh"],["وَجَعَلۡنَا سِرَاجٗا وَهَّاجٗا","Waja'alna sirajan wahhajan","dan Kami menjadikan pelita yang terang-benderang (matahari)"],["وَأَنزَلۡنَا مِنَ ٱلۡمُعۡصِرَٰتِ مَآءٗ ثَجَّاجٗا","Waanzalna mina almu'sirati maan thajjajan","dan Kami turunkan dari awan, air hujan yang tercurah dengan lebatnya"],["لِّنُخۡرِجَ بِهِۦ حَبّٗا وَنَبَاتٗا","Linukhrija bihi habban wanabatan","untuk Kami tumbuhkan dengan air itu biji-bijian dan tanam-tanaman"],["وَجَنَّـٰتٍ أَلۡفَافًا","Wajannatin alfafan","dan kebun-kebun yang rindang"],["إِنَّ يَوۡمَ ٱلۡفَصۡلِ كَانَ مِيقَٰتٗا","Inna yawma alfasli kana meeqatan","Sungguh, hari keputusan adalah suatu waktu yang telah ditetapkan"],["يَوۡمَ يُنفَخُ فِي ٱلصُّورِ فَتَأۡتُونَ أَفۡوَاجٗا","Yawma yunfakhu fee alssoori fatatoona afwajan","(yaitu) pada hari (ketika) sangkakala ditiup, lalu kamu datang berbondong-bondong"],["وَفُتِحَتِ ٱلسَّمَآءُ فَكَانَتۡ أَبۡوَٰبٗا","Wafutihati alssamao fakanat abwaban","dan langit pun dibukalah, maka terdapatlah beberapa pintu"],["وَسُيِّرَتِ ٱلۡجِبَالُ فَكَانَتۡ سَرَابًا","Wasuyyirati aljibalu fakanat saraban","dan gunung-gunungpun dijalankan sehingga menjadi fatamorgana"],["إِنَّ جَهَنَّمَ كَانَتۡ مِرۡصَادٗا","Inna jahannama kanat mirsadan","Sungguh, (neraka) Jahanam itu (sebagai) tempat mengintai (bagi penjaga yang mengawasi isi neraka)"],["لِّلطَّـٰغِينَ مَـَٔابٗا","Lilttagheena maaban","menjadi tempat kembali bagi orang-orang yang melampaui batas"],["لَّـٰبِثِينَ فِيهَآ أَحۡقَابٗا","Labitheena feeha ahqaban","Mereka tinggal di sana dalam masa yang lama"],["لَّا يَذُوقُونَ فِيهَا بَرۡدٗا وَلَا شَرَابًا","La yathooqoona feeha bardan wala sharaban","mereka tidak merasakan kesejukan di dalamnya dan tidak (pula mendapat) minuman"],["إِلَّا حَمِيمٗا وَغَسَّاقٗا","Illa hameeman waghassaqan","selain air yang mendidih dan nanah"],["جَزَآءٗ وِفَاقًا","Jazaan wifaqan","sebagai pembalasan yang setimpal"],["إِنَّهُمۡ كَانُواْ لَا يَرۡجُونَ حِسَابٗا","Innahum kanoo la yarjoona hisaban","Sesungguhnya dahulu mereka tidak pernah mengharapkan perhitungan"],["وَكَذَّبُواْ بِـَٔايَٰتِنَا كِذَّابٗا","Wakaththaboo biayatina kiththaban","dan mereka benar-benar mendustakan ayat-ayat Kami"],["وَكُلَّ شَيۡءٍ أَحۡصَيۡنَٰهُ كِتَٰبٗا","Wakulla shayin ahsaynahu kitaban","Dan segala sesuatu telah Kami catat dalam suatu Kitab (buku catatan amalan manusia)"],["فَذُوقُواْ فَلَن نَّزِيدَكُمۡ إِلَّا عَذَابًا","Fathooqoo falan nazeedakum illa 'athaban","Maka karena itu rasakanlah! Maka tidak ada yang akan Kami tambahkan kepadamu selain azab"],["إِنَّ لِلۡمُتَّقِينَ مَفَازًا","Inna lilmuttaqeena mafazan","Sungguh, orang-orang yang bertakwa mendapat kemenangan"],["حَدَآئِقَ وَأَعۡنَٰبٗا","Hadaiqa waa'naban","(yaitu) kebun-kebun dan buah anggur"],["وَكَوَاعِبَ أَتۡرَابٗا","Wakawa'iba atraban","dan gadis-gadis belia yang sebaya"],["وَكَأۡسٗا دِهَاقٗا","Wakasan dihaqan","dan gelas-gelas yang penuh (berisi minuman)"],["لَّا يَسۡمَعُونَ فِيهَا لَغۡوٗا وَلَا كِذَّـٰبٗا","La yasma'oona feeha laghwan wala kiththaban","Di sana mereka tidak mendengar percakapan yang sia-sia maupun (perkataan dusta)"],["جَزَآءٗ مِّن رَّبِّكَ عَطَآءً حِسَابٗا","Jazaan min rabbika 'ataan hisaban","Sebagai balasan dan pemberian yang cukup banyak dari Tuhanmu"],["رَّبِّ ٱلسَّمَٰوَٰتِ وَٱلۡأَرۡضِ وَمَا بَيۡنَهُمَا ٱلرَّحۡمَٰنِۖ لَا يَمۡلِكُونَ مِنۡهُ خِطَابٗا","Rabbi alssamawati waalardi wama baynahuma alrrahmani la yamlikoona minhu khitaban","Tuhan (yang memelihara) langit dan bumi serta apa yang ada di antara keduanya; Yang Maha Pengasih, mereka tidak mampu berbicara dengan Dia"],["يَوۡمَ يَقُومُ ٱلرُّوحُ وَٱلۡمَلَـٰٓئِكَةُ صَفّٗاۖ لَّا يَتَكَلَّمُونَ إِلَّا مَنۡ أَذِنَ لَهُ ٱلرَّحۡمَٰنُ وَقَالَ صَوَابٗا","Yawma yaqoomu alrroohu waalmalaikatu saffan la yatakallamoona illa man athina lahu alrrahmanu waqala sawaban","(Pada hari, ketika rūḥ894) dan para malaikat berdiri bersaf-saf, mereka tidak berkata-kata, kecuali siapa yang telah diberi izin kepadanya oleh Tuhan Yang Maha Pengasih dan dia hanya mengatakan yang benar"],["ذَٰلِكَ ٱلۡيَوۡمُ ٱلۡحَقُّۖ فَمَن شَآءَ ٱتَّخَذَ إِلَىٰ رَبِّهِۦ مَـَٔابًا","Thalika alyawmu alhaqqu faman shaa ittakhatha ila rabbihi maaban","Itulah hari yang pasti terjadi. Maka barangsiapa menghendaki, niscaya dia menempuh jalan kembali kepada Tuhannya"],["إِنَّآ أَنذَرۡنَٰكُمۡ عَذَابٗا قَرِيبٗا يَوۡمَ يَنظُرُ ٱلۡمَرۡءُ مَا قَدَّمَتۡ يَدَاهُ وَيَقُولُ ٱلۡكَافِرُ يَٰلَيۡتَنِي كُنتُ تُرَٰبَۢا","Inna antharnakum 'athaban qareeban yawma yanthuru almaro ma qaddamat yadahu wayaqoolu alkafiru ya laytanee kuntu turaban","Sesungguhnya Kami telah memperingatkan kepadamu (orang kafir) azab yang dekat, pada hari manusia melihat apa yang telah diperbuat oleh kedua tangannya; dan orang kafir berkata, \"Alangkah baiknya seandainya dahulu aku jadi tanah"]]},{"n":79,"ar":"النازعات","tr":"An-Nazi'at","id":"Malaikat yang Mencabut","v":[["وَٱلنَّـٰزِعَٰتِ غَرۡقٗا","Waalnnazi'ati gharqan","Demi (malaikat) yang mencabut (nyawa) dengan keras"],["وَٱلنَّـٰشِطَٰتِ نَشۡطٗا","Waalnnashitati nashtan","Demi (malaikat) yang mencabut (nyawa) dengan lemah lembut"],["وَٱلسَّـٰبِحَٰتِ سَبۡحٗا","Waalssabihati sabhan","Demi (malaikat) yang turun dari langit dengan cepat"],["فَٱلسَّـٰبِقَٰتِ سَبۡقٗا","Faalssabiqati sabqan","dan (malaikat) yang mendahului dengan kencang"],["فَٱلۡمُدَبِّرَٰتِ أَمۡرٗا","Faalmudabbirati amran","dan (malaikat) yang mengatur urusan (dunia)"],["يَوۡمَ تَرۡجُفُ ٱلرَّاجِفَةُ","Yawma tarjufu alrrajifatu","(Sungguh, kamu akan dibangkitkan) pada hari ketika tiupan pertama mengguncangkan alam"],["تَتۡبَعُهَا ٱلرَّادِفَةُ","Tatba'uha alrradifatu","(tiupan pertama) itu diiringi oleh tiupan kedua"],["قُلُوبٞ يَوۡمَئِذٖ وَاجِفَةٌ","Quloobun yawmaithin wajifatun","Hati manusia pada waktu itu merasa sangat takut"],["أَبۡصَٰرُهَا خَٰشِعَةٞ","Absaruha khashi'atun","pandangannya tunduk"],["يَقُولُونَ أَءِنَّا لَمَرۡدُودُونَ فِي ٱلۡحَافِرَةِ","Yaqooloona ainna lamardoodoona fee alhafirati","(orang-orang kafir) berkata, \"Apakah kita benar-benar akan dikembalikan kepada kehidupan yang semula"],["أَءِذَا كُنَّا عِظَٰمٗا نَّخِرَةٗ","Aitha kunna 'ithaman nakhiratan","Apakah (akan dibangkitkan juga) apabila kita telah menjadi tulang belulang yang hancur"],["قَالُواْ تِلۡكَ إِذٗا كَرَّةٌ خَاسِرَةٞ","Qaloo tilka ithan karratun khasiratun","Mereka berkata, \"Kalau demikian, itu adalah suatu pengembalian yang merugikan"],["فَإِنَّمَا هِيَ زَجۡرَةٞ وَٰحِدَةٞ","Fainnama hiya zajratun wahidatun","Maka pengembalian itu hanyalah dengan sekali tiupan saja"],["فَإِذَا هُم بِٱلسَّاهِرَةِ","Faitha hum bialssahirati","Maka seketika itu mereka hidup kembali di bumi (yang baru)"],["هَلۡ أَتَىٰكَ حَدِيثُ مُوسَىٰٓ","Hal ataka hadeethu moosa","Sudahkah sampai kepadamu (Muhammad) kisah Musa"],["إِذۡ نَادَىٰهُ رَبُّهُۥ بِٱلۡوَادِ ٱلۡمُقَدَّسِ طُوًى","Ith nadahu rabbuhu bialwadi almuqaddasi tuwan","Ketika Tuhan memanggilnya (Musa) di lembah suci yaitu Lembah Tuwa"],["ٱذۡهَبۡ إِلَىٰ فِرۡعَوۡنَ إِنَّهُۥ طَغَىٰ","Ithhab ila fir'awna innahu tagha","pergilah engkau kepada Fir'aun! Sesungguhnya dia telah melampaui batas"],["فَقُلۡ هَل لَّكَ إِلَىٰٓ أَن تَزَكَّىٰ","Faqul hal laka ila an tazakka","Maka katakanlah (kepada Fir'aun), \"Adakah keinginanmu untuk membersihkan diri (dari kesesatan)"],["وَأَهۡدِيَكَ إِلَىٰ رَبِّكَ فَتَخۡشَىٰ","Waahdiyaka ila rabbika fatakhsha","dan engkau akan kubimbing ke jalan Tuhanmu agar engkau takut kepada-Nya"],["فَأَرَىٰهُ ٱلۡأٓيَةَ ٱلۡكُبۡرَىٰ","Faarahu alayata alkubra","Lalu (Musa) memperlihatkan kepadanya mukjizat yang besar"],["فَكَذَّبَ وَعَصَىٰ","Fakaththaba wa'asa","Tetapi dia (Fir'aun) mendustakan dan mendurhakai"],["ثُمَّ أَدۡبَرَ يَسۡعَىٰ","Thumma adbara yas'a","Kemudian dia berpaling seraya berusaha menantang (Musa)"],["فَحَشَرَ فَنَادَىٰ","Fahashara fanada","Kemudian dia mengumpulkan (pembesar-pembesarnya) lalu berseru (memanggil kaumnya)"],["فَقَالَ أَنَا۠ رَبُّكُمُ ٱلۡأَعۡلَىٰ","Faqala ana rabbukumu ala'la","(Seraya) berkata, \"Akulah tuhanmu yang paling tinggi"],["فَأَخَذَهُ ٱللَّهُ نَكَالَ ٱلۡأٓخِرَةِ وَٱلۡأُولَىٰٓ","Faakhathahu Allahu nakala alakhirati waaloola","Maka Allah menghukumnya dengan azab di akhirat dan siksaan di dunia"],["إِنَّ فِي ذَٰلِكَ لَعِبۡرَةٗ لِّمَن يَخۡشَىٰٓ","Inna fee thalika la'ibratan liman yakhsha","Sungguh, pada yang demikian itu terdapat pelajaran bagi orang yang takut (kepada Allah)"],["ءَأَنتُمۡ أَشَدُّ خَلۡقًا أَمِ ٱلسَّمَآءُۚ بَنَىٰهَا","Aantum ashaddu khalqan ami alssamao banaha","Apakah penciptaan kamu yang lebih hebat ataukah langit yang telah dibangun-Nya"],["رَفَعَ سَمۡكَهَا فَسَوَّىٰهَا","Rafa'a samkaha fasawwaha","Dia telah meninggikan bangunannya lalu menyempurnakannya"],["وَأَغۡطَشَ لَيۡلَهَا وَأَخۡرَجَ ضُحَىٰهَا","Waaghtasha laylaha waakhraja duhaha","dan Dia menjadikan malamnya (gelap gulita), dan menjadikan siangnya (terang benderang)"],["وَٱلۡأَرۡضَ بَعۡدَ ذَٰلِكَ دَحَىٰهَآ","Waalarda ba'da thalika dahaha","Dan setelah itu bumi Dia hamparkan"],["أَخۡرَجَ مِنۡهَا مَآءَهَا وَمَرۡعَىٰهَا","Akhraja minha maaha wamar'aha","Darinya Dia pancarkan mata air, dan (ditumbuhkan) tumbuh-tumbuhannya"],["وَٱلۡجِبَالَ أَرۡسَىٰهَا","Waaljibala arsaha","Dan gunung-gunung Dia pancangkan dengan kokoh"],["مَتَٰعٗا لَّكُمۡ وَلِأَنۡعَٰمِكُمۡ","Mata'an lakum walian'amikum","(Semua itu) untuk kesenanganmu dan untuk hewan-hewan ternakmu"],["فَإِذَا جَآءَتِ ٱلطَّآمَّةُ ٱلۡكُبۡرَىٰ","Faitha jaati alttammatu alkubra","Maka apabila malapetaka besar (hari Kiamat) telah datang"],["يَوۡمَ يَتَذَكَّرُ ٱلۡإِنسَٰنُ مَا سَعَىٰ","Yawma yatathakkaru alinsanu ma sa'a","yaitu pada hari (ketika) manusia teringat akan apa yang telah dikerjakannya"],["وَبُرِّزَتِ ٱلۡجَحِيمُ لِمَن يَرَىٰ","Waburrizati aljaheemu liman yara","dan neraka diperlihatkan dengan jelas kepada setiap orang yang melihat"],["فَأَمَّا مَن طَغَىٰ","Faamma man tagha","Maka adapun orang yang melampaui batas"],["وَءَاثَرَ ٱلۡحَيَوٰةَ ٱلدُّنۡيَا","Waathara alhayata alddunya","dan lebih mengutamakan kehidupan dunia"],["فَإِنَّ ٱلۡجَحِيمَ هِيَ ٱلۡمَأۡوَىٰ","Fainna aljaheema hiya almawa","maka sungguh, nerakalah tempat tinggalnya"],["وَأَمَّا مَنۡ خَافَ مَقَامَ رَبِّهِۦ وَنَهَى ٱلنَّفۡسَ عَنِ ٱلۡهَوَىٰ","Waama man khafa maqama rabbihi wanaha alnnafsa 'ani alhawa","Dan adapun orang-orang yang takut kepada kebesaran Tuhannya dan menahan diri dari (keinginan) hawa nafsunya"],["فَإِنَّ ٱلۡجَنَّةَ هِيَ ٱلۡمَأۡوَىٰ","Fainna aljannata hiya almawa","maka sungguh, surgalah tempat tinggal-(nya)"],["يَسۡـَٔلُونَكَ عَنِ ٱلسَّاعَةِ أَيَّانَ مُرۡسَىٰهَا","Yasaloonaka 'ani alssa'ati ayyana mursaha","Mereka (orang-orang kafir) bertanya kepadamu (Muhammad) tentang hari Kiamat, \"Kapankah terjadinya"],["فِيمَ أَنتَ مِن ذِكۡرَىٰهَآ","Feema anta min thikraha","Untuk apa engkau perlu menyebutkannya (waktunya)"],["إِلَىٰ رَبِّكَ مُنتَهَىٰهَآ","Ila rabbika muntahaha","Kepada Tuhanmulah (dikembalikan) kesudahannya (ketentuan waktunya)"],["إِنَّمَآ أَنتَ مُنذِرُ مَن يَخۡشَىٰهَا","Innama anta munthiru man yakhshaha","Engkau (Muhammad) hanyalah pemberi peringatan bagi siapa yang takut kepadanya (hari Kiamat)"],["كَأَنَّهُمۡ يَوۡمَ يَرَوۡنَهَا لَمۡ يَلۡبَثُوٓاْ إِلَّا عَشِيَّةً أَوۡ ضُحَىٰهَا","Kaannahum yawma yarawnaha lam yalbathoo illa 'ashiyyatan aw duhaha","Pada hari ketika mereka melihat hari Kiamat itu (karena suasananya hebat), mereka merasa seakan-akan hanya (sebentar saja) tinggal (di dunia) pada waktu sore atau pagi hari"]]},{"n":80,"ar":"عبس","tr":"'Abasa","id":"Ia Bermuka Masam","v":[["عَبَسَ وَتَوَلَّىٰٓ","'abasa watawalla","Dia (Muhammad) berwajah masam dan berpaling"],["أَن جَآءَهُ ٱلۡأَعۡمَىٰ","An jaahu ala'ma","karena seorang buta telah datang kepadanya (Abdullah bin Ummi Maktum)"],["وَمَا يُدۡرِيكَ لَعَلَّهُۥ يَزَّكَّىٰٓ","Wama yudreeka la'allahu yazzakka","Dan tahukah engkau (Muhammad) barangkali dia ingin menyucikan dirinya (dari dosa)"],["أَوۡ يَذَّكَّرُ فَتَنفَعَهُ ٱلذِّكۡرَىٰٓ","Aw yaththakkaru fatanfa'ahu alththikra","atau dia (ingin) mendapatkan pengajaran, yang memberi manfaat kepadanya"],["أَمَّا مَنِ ٱسۡتَغۡنَىٰ","Amma mani istaghna","Adapun orang yang merasa dirinya serba cukup (pembesar-pembesar Quraisy)"],["فَأَنتَ لَهُۥ تَصَدَّىٰ","Faanta lahu tasadda","maka engkau (Muhammad) memberi perhatian kepadanya"],["وَمَا عَلَيۡكَ أَلَّا يَزَّكَّىٰ","Wama 'alayka alla yazzakka","padahal tidak ada (cela) atasmu kalau dia tidak menyucikan diri (beriman)"],["وَأَمَّا مَن جَآءَكَ يَسۡعَىٰ","Waamma man jaaka yas'a","Dan adapun orang yang datang kepadamu dengan bersegera (untuk mendapatkan pengajaran)"],["وَهُوَ يَخۡشَىٰ","Wahuwa yakhsha","sedang dia takut (kepada Allah)"],["فَأَنتَ عَنۡهُ تَلَهَّىٰ","Faanta 'anhu talahha","engkau (Muhammad) malah mengabaikannya"],["كَلَّآ إِنَّهَا تَذۡكِرَةٞ","Kalla innaha tathkiratun","Sekali-kali jangan (begitu)! Sungguh, (ajaran-ajaran Allah) itu suatu peringatan"],["فَمَن شَآءَ ذَكَرَهُۥ","Faman shaa thakarahu","maka barangsiapa menghendaki, tentulah dia akan memperhatikannya"],["فِي صُحُفٖ مُّكَرَّمَةٖ","Fee suhufin mukarramatin","di dalam kitab-kitab yang dimuliakan (di sisi Allah)"],["مَّرۡفُوعَةٖ مُّطَهَّرَةِۭ","Marfoo'atin mutahharatin","yang ditinggikan (dan) disucikan"],["بِأَيۡدِي سَفَرَةٖ","Biaydee safaratin","di tangan para utusan (malaikat)"],["كِرَامِۭ بَرَرَةٖ","Kiramin bararatin","yang mulia lagi berbakti"],["قُتِلَ ٱلۡإِنسَٰنُ مَآ أَكۡفَرَهُۥ","Qutila alinsanu ma akfarahu","Celakalah manusia! Alangkah kufurnya dia"],["مِنۡ أَيِّ شَيۡءٍ خَلَقَهُۥ","Min ayyi shayin khalaqahu","Dari apakah Dia (Allah) menciptakannya"],["مِن نُّطۡفَةٍ خَلَقَهُۥ فَقَدَّرَهُۥ","Min nutfatin khalaqahu faqaddarahu","Dari setetes mani, Dia menciptakannya lalu menentukannya"],["ثُمَّ ٱلسَّبِيلَ يَسَّرَهُۥ","Thumma alssabeela yassarahu","Kemudian jalannya Dia mudahkan"],["ثُمَّ أَمَاتَهُۥ فَأَقۡبَرَهُۥ","Thumma amatahu faaqbarahu","kemudian Dia mematikannya lalu menguburkannya"],["ثُمَّ إِذَا شَآءَ أَنشَرَهُۥ","Thumma itha shaa ansharahu","kemudian jika Dia menghendaki, Dia membangkitkannya kembali"],["كَلَّا لَمَّا يَقۡضِ مَآ أَمَرَهُۥ","Kalla lamma yaqdi ma amarahu","Sekali-kali jangan (begitu)! Dia (manusia) itu belum melaksanakan apa yang Dia (Allah) perintahkan kepadanya"],["فَلۡيَنظُرِ ٱلۡإِنسَٰنُ إِلَىٰ طَعَامِهِۦٓ","Falyanthuri alinsanu ila ta'amihi","Maka hendaklah manusia itu memperhatikan makanannya"],["أَنَّا صَبَبۡنَا ٱلۡمَآءَ صَبّٗا","Anna sababna almaa sabban","Kamilah yang telah mencurahkan air melimpah (dari langit)"],["ثُمَّ شَقَقۡنَا ٱلۡأَرۡضَ شَقّٗا","Thumma shaqaqna alarda shaqqan","kemudian Kami belah bumi dengan sebaik-baiknya"],["فَأَنۢبَتۡنَا فِيهَا حَبّٗا","Faanbatna feeha habban","lalu di sana Kami tumbuhkan biji-bijian"],["وَعِنَبٗا وَقَضۡبٗا","Wa'inaban waqadban","dan anggur dan sayur-sayuran"],["وَزَيۡتُونٗا وَنَخۡلٗا","Wazaytoonan wanakhlan","dan zaitun dan pohon kurma"],["وَحَدَآئِقَ غُلۡبٗا","Wahadaiqa ghulban","dan kebun-kebun (yang) rindang"],["وَفَٰكِهَةٗ وَأَبّٗا","Wafakihatan waabban","dan buah-buahan serta rerumputan"],["مَّتَٰعٗا لَّكُمۡ وَلِأَنۡعَٰمِكُمۡ","Mata'an lakum walian'amikum","(Semua itu) untuk kesenanganmu dan untuk hewan-hewan ternakmu"],["فَإِذَا جَآءَتِ ٱلصَّآخَّةُ","Faitha jaati alssakhkhatu","Maka apabila datang suara yang memekakkan (tiupan sangkakala yang kedua)"],["يَوۡمَ يَفِرُّ ٱلۡمَرۡءُ مِنۡ أَخِيهِ","Yawma yafirru almaro min akheehi","pada hari itu manusia lari dari saudaranya"],["وَأُمِّهِۦ وَأَبِيهِ","Waommihi waabeehi","dan dari ibu dan bapaknya"],["وَصَٰحِبَتِهِۦ وَبَنِيهِ","Wasahibatihi wabaneehi","dan dari istri dan anak-anaknya"],["لِكُلِّ ٱمۡرِيٕٖ مِّنۡهُمۡ يَوۡمَئِذٖ شَأۡنٞ يُغۡنِيهِ","Likulli imriin minhum yawmaithin shanun yughneehi","Setiap orang dari mereka pada hari itu mempunyai urusan yang menyibukkannya"],["وُجُوهٞ يَوۡمَئِذٖ مُّسۡفِرَةٞ","Wujoohun yawmaithin musfiratun","Pada hari itu ada wajah-wajah yang berseri-seri"],["ضَاحِكَةٞ مُّسۡتَبۡشِرَةٞ","Dahikatun mustabshiratun","tertawa dan gembira ria"],["وَوُجُوهٞ يَوۡمَئِذٍ عَلَيۡهَا غَبَرَةٞ","Wawujoohun yawmaithin 'alayha ghabaratun","dan pada hari itu ada (pula) wajah-wajah yang tertutup debu (suram)"],["تَرۡهَقُهَا قَتَرَةٌ","Tarhaquha qataratun","tertutup oleh kegelapan (ditimpa kehinaan dan kesusahan)"],["أُوْلَـٰٓئِكَ هُمُ ٱلۡكَفَرَةُ ٱلۡفَجَرَةُ","Olaika humu alkafaratu alfajaratu","Mereka itulah orang-orang kafir yang durhaka"]]},{"n":81,"ar":"التكوير","tr":"At-Takwir","id":"Menggulung","v":[["إِذَا ٱلشَّمۡسُ كُوِّرَتۡ","Itha alshshamsu kuwwirat","Apabila matahari digulung"],["وَإِذَا ٱلنُّجُومُ ٱنكَدَرَتۡ","Waitha alnnujoomu inkadarat","dan apabila bintang-bintang berjatuhan"],["وَإِذَا ٱلۡجِبَالُ سُيِّرَتۡ","Waitha aljibalu suyyirat","dan apabila gunung-gunung dihancurkan"],["وَإِذَا ٱلۡعِشَارُ عُطِّلَتۡ","Waitha al'isharu 'uttilat","dan apabila unta-unta yang bunting ditinggalkan (tidak terurus)"],["وَإِذَا ٱلۡوُحُوشُ حُشِرَتۡ","Waitha alwuhooshu hushirat","dan apabila binatang-binatang liar dikumpulkan"],["وَإِذَا ٱلۡبِحَارُ سُجِّرَتۡ","Waitha albiharu sujjirat","dan apabila lautan dipanaskan"],["وَإِذَا ٱلنُّفُوسُ زُوِّجَتۡ","Waitha alnnufoosu zuwwijat","dan apabila roh-roh dipertemukan (dengan tubuh)"],["وَإِذَا ٱلۡمَوۡءُۥدَةُ سُئِلَتۡ","Waitha almawoodatu suilat","dan apabila bayi-bayi perempuan yang dikubur hidup-hidup ditanya"],["بِأَيِّ ذَنۢبٖ قُتِلَتۡ","Biayyi thanbin qutilat","karena dosa apa dia dibunuh"],["وَإِذَا ٱلصُّحُفُ نُشِرَتۡ","Waitha alssuhufu nushirat","Dan apabila lembaran-lembaran (catatan amal) telah dibuka lebar-lebar"],["وَإِذَا ٱلسَّمَآءُ كُشِطَتۡ","Waitha alssamao kushitat","dan apabila langit dilenyapkan"],["وَإِذَا ٱلۡجَحِيمُ سُعِّرَتۡ","Waitha aljaheemu su''irat","dan apabila neraka Jahim dinyalakan"],["وَإِذَا ٱلۡجَنَّةُ أُزۡلِفَتۡ","Waitha aljannatu ozlifat","dan apabila surga didekatkan"],["عَلِمَتۡ نَفۡسٞ مَّآ أَحۡضَرَتۡ","'alimat nafsun ma ahdarat","setiap jiwa akan mengetahui apa yang telah dikerjakannya"],["فَلَآ أُقۡسِمُ بِٱلۡخُنَّسِ","Fala oqsimu bialkhunnasi","Aku bersumpah demi bintang-bintang"],["ٱلۡجَوَارِ ٱلۡكُنَّسِ","Aljawari alkunnasi","yang beredar dan terbenam"],["وَٱلَّيۡلِ إِذَا عَسۡعَسَ","Waallayli itha 'as'asa","demi malam apabila telah larut"],["وَٱلصُّبۡحِ إِذَا تَنَفَّسَ","Waalssubhi itha tanaffasa","dan demi subuh apabila telah menyinsing"],["إِنَّهُۥ لَقَوۡلُ رَسُولٖ كَرِيمٖ","Innahu laqawlu rasoolin kareemin","sesungguhnya (Alquran) itu benar-benar firman (Allah yang dibawa oleh) utusan yang mulia (Jibril)"],["ذِي قُوَّةٍ عِندَ ذِي ٱلۡعَرۡشِ مَكِينٖ","Thee quwwatin 'inda thee al'arshi makeenin","yang memiliki kekuatan, memiliki kedudukan tinggi di sisi (Allah) yang memiliki Arasy"],["مُّطَاعٖ ثَمَّ أَمِينٖ","Muta'in thamma ameenin","yang di sana (di alam malaikat) ditaati dan dipercaya"],["وَمَا صَاحِبُكُم بِمَجۡنُونٖ","Wama sahibukum bimajnoonin","Dan temanmu (Muhammad) itu bukanlah orang gila"],["وَلَقَدۡ رَءَاهُ بِٱلۡأُفُقِ ٱلۡمُبِينِ","Walaqad raahu bialofuqi almubeeni","Dan sungguh, dia (Muhammad) telah melihatnya (Jibril) di ufuk yang terang"],["وَمَا هُوَ عَلَى ٱلۡغَيۡبِ بِضَنِينٖ","Wama huwa 'ala alghaybi bidaneenin","Dan Dia (Muhammad) bukanlah seorang yang kikir (enggan) untuk menerangkan yang gaib"],["وَمَا هُوَ بِقَوۡلِ شَيۡطَٰنٖ رَّجِيمٖ","Wama huwa biqawli shaytanin rajeemin","Dan (Alquran) itu bukanlah perkataan setan yang terkutuk"],["فَأَيۡنَ تَذۡهَبُونَ","Faayna tathhaboona","maka ke manakah kamu akan pergi"],["إِنۡ هُوَ إِلَّا ذِكۡرٞ لِّلۡعَٰلَمِينَ","In huwa illa thikrun lil'alameena","(Alquran) itu tidak lain adalah peringatan bagi seluruh alam"],["لِمَن شَآءَ مِنكُمۡ أَن يَسۡتَقِيمَ","Liman shaa minkum an yastaqeema","(yaitu) bagi siapa di antara kamu yang menghendaki menempuh jalan yang lurus"],["وَمَا تَشَآءُونَ إِلَّآ أَن يَشَآءَ ٱللَّهُ رَبُّ ٱلۡعَٰلَمِينَ","Wama tashaoona illa an yashaa Allahu rabbu al'alameena","Dan kamu tidak dapat menghendaki (menempuh jalan itu) kecuali apabila dikehendaki Allah, Tuhan seluruh alam"]]},{"n":82,"ar":"الإنفطار","tr":"Al-Infitar","id":"Terbelah","v":[["إِذَا ٱلسَّمَآءُ ٱنفَطَرَتۡ","Itha alssamao infatarat","Apabila langit terbelah"],["وَإِذَا ٱلۡكَوَاكِبُ ٱنتَثَرَتۡ","Waitha alkawakibu intatharat","dan apabila bintang-bintang jatuh berserakan"],["وَإِذَا ٱلۡبِحَارُ فُجِّرَتۡ","Waitha albiharu fujjirat","dan apabila lautan dijadikan meluap"],["وَإِذَا ٱلۡقُبُورُ بُعۡثِرَتۡ","Waitha alqubooru bu'thirat","dan apabila kuburan-kuburan dibongkar"],["عَلِمَتۡ نَفۡسٞ مَّا قَدَّمَتۡ وَأَخَّرَتۡ","'alimat nafsun ma qaddamat waakhkharat","(maka) setiap jiwa akan mengetahui apa yang telah dikerjakan dan yang dilalaikan(nya)"],["يَـٰٓأَيُّهَا ٱلۡإِنسَٰنُ مَا غَرَّكَ بِرَبِّكَ ٱلۡكَرِيمِ","Ya ayyuha alinsanu ma gharraka birabbika alkareemi","Wahai manusia! Apakah yang telah memperdayakan kamu (berbuat durhaka) terhadap Tuhanmu Yang Maha Pengasih"],["ٱلَّذِي خَلَقَكَ فَسَوَّىٰكَ فَعَدَلَكَ","Allathee khalaqaka fasawwaka fa'adalaka","Yang telah menciptakanmu lalu menyempurnakan kejadianmu dan menjadikan (susunan tubuh)mu seimbang"],["فِيٓ أَيِّ صُورَةٖ مَّا شَآءَ رَكَّبَكَ","Fee ayyi sooratin ma shaa rakkabaka","dalam bentuk apa saja yang dikehendaki, Dia menyusun tubuhmu"],["كَلَّا بَلۡ تُكَذِّبُونَ بِٱلدِّينِ","Kalla bal tukaththiboona bialddeeni","Sekali-kali jangan begitu! Bahkan kamu mendustakan hari pembalasan"],["وَإِنَّ عَلَيۡكُمۡ لَحَٰفِظِينَ","Wainna 'alaykum lahafitheena","Dan sesungguhnya bagi kamu ada (malaikat-malaikat) yang mengawasi (pekerjaanmu)"],["كِرَامٗا كَٰتِبِينَ","Kiraman katibeena","yang mulia (di sisi Allah) dan yang mencatat (perbuatanmu)"],["يَعۡلَمُونَ مَا تَفۡعَلُونَ","Ya'lamoona ma taf'aloona","mereka mengetahui apa yang kamu kerjakan"],["إِنَّ ٱلۡأَبۡرَارَ لَفِي نَعِيمٖ","Inna alabrara lafee na'eemin","Sesungguhnya orang-orang yang berbakti benar-benar berada dalam (surga yang penuh) kenikmatan"],["وَإِنَّ ٱلۡفُجَّارَ لَفِي جَحِيمٖ","Wainna alfujjara lafee jaheemin","dan sesungguhnya orang-orang yang durhaka benar-benar berada dalam neraka"],["يَصۡلَوۡنَهَا يَوۡمَ ٱلدِّينِ","Yaslawnaha yawma alddeeni","Mereka masuk ke dalamnya pada hari pembalasan"],["وَمَا هُمۡ عَنۡهَا بِغَآئِبِينَ","Wama hum 'anha bighaibeena","Dan mereka tidak mungkin keluar dari neraka itu"],["وَمَآ أَدۡرَىٰكَ مَا يَوۡمُ ٱلدِّينِ","Wama adraka ma yawmu alddeeni","Dan tahukah kamu apakah hari pembalasan itu"],["ثُمَّ مَآ أَدۡرَىٰكَ مَا يَوۡمُ ٱلدِّينِ","Thumma ma adraka ma yawmu alddeeni","Sekali lagi, tahukah kamu apakah hari pembalasan itu"],["يَوۡمَ لَا تَمۡلِكُ نَفۡسٞ لِّنَفۡسٖ شَيۡـٔٗاۖ وَٱلۡأَمۡرُ يَوۡمَئِذٖ لِّلَّهِ","Yawma la tamliku nafsun linafsin shayan waalamru yawmaithin lillahi","(Yaitu) pada hari (ketika) seseorang sama sekali tidak berdaya (menolong) orang lain. Dan segala urusan pada hari itu dalam kekuasaan Allah"]]},{"n":83,"ar":"المطففين","tr":"Al-Mutaffifin","id":"Orang-orang Curang","v":[["وَيۡلٞ لِّلۡمُطَفِّفِينَ","Waylun lilmutaffifeena","Celakalah bagi orang-orang yang curang (dalam menakar dan menimbang)"],["ٱلَّذِينَ إِذَا ٱكۡتَالُواْ عَلَى ٱلنَّاسِ يَسۡتَوۡفُونَ","Allatheena itha iktaloo 'ala alnnasi yastawfoona","(yaitu) orang-orang yang apabila menerima takaran dari orang lain mereka minta dicukupkan"],["وَإِذَا كَالُوهُمۡ أَو وَّزَنُوهُمۡ يُخۡسِرُونَ","Waitha kaloohum aw wazanoohum yukhsiroona","dan apabila mereka menakar atau menimbang (untuk orang lain), mereka mengurangi"],["أَلَا يَظُنُّ أُوْلَـٰٓئِكَ أَنَّهُم مَّبۡعُوثُونَ","Ala yathunnu olaika annahum mab'oothoona","Tidakkah mereka itu mengira, bahwa sesungguhnya mereka akan dibangkitkan"],["لِيَوۡمٍ عَظِيمٖ","Liyawmin 'atheemin","pada suatu hari yang besar"],["يَوۡمَ يَقُومُ ٱلنَّاسُ لِرَبِّ ٱلۡعَٰلَمِينَ","Yawma yaqoomu alnnasu lirabbi al'alameena","(yaitu) pada hari (ketika) semua orang bangkit menghadap Tuhan seluruh alam"],["كَلَّآ إِنَّ كِتَٰبَ ٱلۡفُجَّارِ لَفِي سِجِّينٖ","Kalla inna kitaba alfujjari lafee sijjeenin","Sekali-kali jangan begitu! Sesungguhnya catatan orang yang durhaka benar-benar tersimpan dalam Sijjīn"],["وَمَآ أَدۡرَىٰكَ مَا سِجِّينٞ","Wama adraka ma sijjeenun","Dan tahukah engkau apakah Sijjīn itu"],["كِتَٰبٞ مَّرۡقُومٞ","Kitabun marqoomun","(Yaitu) Kitab yang berisi catatan (amal)"],["وَيۡلٞ يَوۡمَئِذٖ لِّلۡمُكَذِّبِينَ","Waylun yawmaithin lilmukaththibeena","Celakalah pada hari itu, bagi orang-orang yang mendustakan"],["ٱلَّذِينَ يُكَذِّبُونَ بِيَوۡمِ ٱلدِّينِ","Allatheena yukaththiboona biyawmi alddeeni","(yaitu) orang-orang yang mendustakannya (hari pembalasan)"],["وَمَا يُكَذِّبُ بِهِۦٓ إِلَّا كُلُّ مُعۡتَدٍ أَثِيمٍ","Wama yukaththibu bihi illa kullu mu'tadin atheemin","Dan tidak ada yang mendustakannya (hari pembalasan) kecuali setiap orang yang melampaui batas dan berdosa"],["إِذَا تُتۡلَىٰ عَلَيۡهِ ءَايَٰتُنَا قَالَ أَسَٰطِيرُ ٱلۡأَوَّلِينَ","Itha tutla 'alayhi ayatuna qala asateeru alawwaleena","yang apabila dibacakan kepadanya ayat-ayat Kami, dia berkata, \"Itu adalah dongeng orang-orang dahulu"],["كَلَّاۖ بَلۡۜ رَانَ عَلَىٰ قُلُوبِهِم مَّا كَانُواْ يَكۡسِبُونَ","Kalla bal rana 'ala quloobihim ma kanoo yaksiboona","Sekali-kali tidak! Bahkan apa yang mereka kerjakan itu telah menutupi hati mereka"],["كَلَّآ إِنَّهُمۡ عَن رَّبِّهِمۡ يَوۡمَئِذٖ لَّمَحۡجُوبُونَ","Kalla innahum 'an rabbihim yawmaithin lamahjooboona","(Sekali-kali tidak!901) Sesungguhnya mereka pada hari itu benar-benar terhalang dari (melihat) Tuhannya"],["ثُمَّ إِنَّهُمۡ لَصَالُواْ ٱلۡجَحِيمِ","Thumma innahum lasaloo aljaheemi","Kemudian, sesungguhnya mereka benar-benar masuk neraka"],["ثُمَّ يُقَالُ هَٰذَا ٱلَّذِي كُنتُم بِهِۦ تُكَذِّبُونَ","Thumma yuqalu hatha allathee kuntum bihi tukaththiboona","Kemudian, dikatakan (kepada mereka), \"Inilah (azab) yang dahulu kamu dustakan"],["كَلَّآ إِنَّ كِتَٰبَ ٱلۡأَبۡرَارِ لَفِي عِلِّيِّينَ","Kalla inna kitaba alabrari lafee 'illiyyeena","Sekali-kali tidak! Sesungguhnya catatan orang-orang yang berbakti benar-benar tersimpan dalam 'Illiyyīn"],["وَمَآ أَدۡرَىٰكَ مَا عِلِّيُّونَ","Wama adraka ma 'illiyyoona","Dan tahukah engkau apakah 'Illiyyīn itu"],["كِتَٰبٞ مَّرۡقُومٞ","Kitabun marqoomun","(Yaitu) Kitab yang berisi catatan (amal)"],["يَشۡهَدُهُ ٱلۡمُقَرَّبُونَ","Yashhaduhu almuqarraboona","yang disaksikan oleh (malaikat-malaikat) yang didekatkan (kepada Allah)"],["إِنَّ ٱلۡأَبۡرَارَ لَفِي نَعِيمٍ","Inna alabrara lafee na'eemin","Sesungguhnya orang-orang yang berbakti benar-benar berada dalam (surga yang penuh) kenikmatan"],["عَلَى ٱلۡأَرَآئِكِ يَنظُرُونَ","'ala alaraiki yanthuroona","mereka (duduk) di atas dipan-dipan melepas pandangan"],["تَعۡرِفُ فِي وُجُوهِهِمۡ نَضۡرَةَ ٱلنَّعِيمِ","Ta'rifu fee wujoohihim nadrata alnna'eemi","Kamu dapat mengetahui dari wajah mereka kesenangan hidup yang penuh kenikmatan"],["يُسۡقَوۡنَ مِن رَّحِيقٖ مَّخۡتُومٍ","Yusqawna min raheeqin makhtoomin","Mereka diberi minum dari khamar murni (tidak memabukkan) yang (tempatnya) masih dilak (disegel)"],["خِتَٰمُهُۥ مِسۡكٞۚ وَفِي ذَٰلِكَ فَلۡيَتَنَافَسِ ٱلۡمُتَنَٰفِسُونَ","Khitamuhu miskun wafee thalika falyatanafasi almutanafisoona","laknya dari kasturi. Dan untuk yang demikian itu hendaknya orang berlomba-lomba"],["وَمِزَاجُهُۥ مِن تَسۡنِيمٍ","Wamizajuhu min tasneemin","Dan campurannya dari tasnīm"],["عَيۡنٗا يَشۡرَبُ بِهَا ٱلۡمُقَرَّبُونَ","'aynan yashrabu biha almuqarraboona","(yaitu) mata air yang diminum oleh mereka yang dekat (kepada Allah)"],["إِنَّ ٱلَّذِينَ أَجۡرَمُواْ كَانُواْ مِنَ ٱلَّذِينَ ءَامَنُواْ يَضۡحَكُونَ","Inna allatheena ajramoo kanoo mina allatheena amanoo yadhakoona","Sesungguhnya orang-orang yang berdosa, adalah mereka yang dahulu menertawakan orang-orang yang beriman"],["وَإِذَا مَرُّواْ بِهِمۡ يَتَغَامَزُونَ","Waitha marroo bihim yataghamazoona","Dan apabila mereka (orang-orang yang beriman) melintas di hadapan mereka, mereka saling mengedip-ngedipkan matanya"],["وَإِذَا ٱنقَلَبُوٓاْ إِلَىٰٓ أَهۡلِهِمُ ٱنقَلَبُواْ فَكِهِينَ","Waitha inqalaboo ila ahlihimu inqalaboo fakiheena","dan apabila kembali kepada kaumnya, mereka kembali dengan gembira ria"],["وَإِذَا رَأَوۡهُمۡ قَالُوٓاْ إِنَّ هَـٰٓؤُلَآءِ لَضَآلُّونَ","Waitha raawhum qaloo inna haolai ladalloona","Dan apabila mereka melihat (orang-orang mukmin), mereka mengatakan, \"Sesungguhnya mereka benar-benar orang-orang sesat"],["وَمَآ أُرۡسِلُواْ عَلَيۡهِمۡ حَٰفِظِينَ","Wama orsiloo 'alayhim hafitheena","padahal (orang-orang yang berdosa itu), mereka tidak diutus sebagai penjaga (orang-orang mukmin)"],["فَٱلۡيَوۡمَ ٱلَّذِينَ ءَامَنُواْ مِنَ ٱلۡكُفَّارِ يَضۡحَكُونَ","Faalyawma allatheena amanoo mina alkuffari yadhakoona","Maka pada hari ini, orang-orang yang beriman yang menertawakan orang-orang kafir"],["عَلَى ٱلۡأَرَآئِكِ يَنظُرُونَ","'ala alaraiki yanthuroona","mereka (duduk) di atas dipan-dipan melepas pandangan"],["هَلۡ ثُوِّبَ ٱلۡكُفَّارُ مَا كَانُواْ يَفۡعَلُونَ","Hal thuwwiba alkuffaru ma kanoo yaf'aloona","Apakah orang-orang kafir itu diberi balasan (hukuman) terhadap apa yang telah mereka perbuat"]]},{"n":84,"ar":"الإنشقاق","tr":"Al-Inshiqaq","id":"Terbelah","v":[["إِذَا ٱلسَّمَآءُ ٱنشَقَّتۡ","Itha alssamao inshaqqat","Apabila langit terbelah"],["وَأَذِنَتۡ لِرَبِّهَا وَحُقَّتۡ","Waathinat lirabbiha wahuqqat","dan patuh kepada Tuhannya, dan sudah semestinya patuh"],["وَإِذَا ٱلۡأَرۡضُ مُدَّتۡ","Waitha alardu muddat","dan apabila bumi diratakan"],["وَأَلۡقَتۡ مَا فِيهَا وَتَخَلَّتۡ","Waalqat ma feeha watakhallat","dan memuntahkan apa yang ada di dalamnya dan menjadi kosong"],["وَأَذِنَتۡ لِرَبِّهَا وَحُقَّتۡ","Waathinat lirabbiha wahuqqat","dan patuh kepada Tuhannya, dan sudah semestinya patuh"],["يَـٰٓأَيُّهَا ٱلۡإِنسَٰنُ إِنَّكَ كَادِحٌ إِلَىٰ رَبِّكَ كَدۡحٗا فَمُلَٰقِيهِ","Ya ayyuha alinsanu innaka kadihun ila rabbika kadhan famulaqeehi","Wahai manusia! Sesungguhnya kamu telah bekerja keras menuju Tuhanmu, maka kamu akan menemui-Nya"],["فَأَمَّا مَنۡ أُوتِيَ كِتَٰبَهُۥ بِيَمِينِهِۦ","Faama man ootiya kitabahu biyameenihi","Maka adapun orang yang catatanya diberikan dari sebelah kanannya"],["فَسَوۡفَ يُحَاسَبُ حِسَابٗا يَسِيرٗا","Fasawfa yuhasabu hisaban yaseeran","maka dia akan diperiksa dengan pemeriksaan yang mudah"],["وَيَنقَلِبُ إِلَىٰٓ أَهۡلِهِۦ مَسۡرُورٗا","Wayanqalibu ila ahlihi masrooran","dan dia akan kembali kepada keluarganya (yang sama-sama beriman) dengan gembira"],["وَأَمَّا مَنۡ أُوتِيَ كِتَٰبَهُۥ وَرَآءَ ظَهۡرِهِۦ","Waamma man ootiya kitabahu waraa thahrihi","Dan adapun orang yang catatannya diberikan dari arah belakang"],["فَسَوۡفَ يَدۡعُواْ ثُبُورٗا","Fasawfa yad'oo thubooran","maka dia akan berteriak, \"Celakalah aku"],["وَيَصۡلَىٰ سَعِيرًا","Wayasla sa'eeran","Dan dia akan masuk ke dalam api yang menyala-nyala (neraka)"],["إِنَّهُۥ كَانَ فِيٓ أَهۡلِهِۦ مَسۡرُورًا","Innahu kana fee ahlihi masrooran","Sungguh, dia dahulu (di dunia) bergembira di kalangan keluarganya (yang sama-sama kafir)"],["إِنَّهُۥ ظَنَّ أَن لَّن يَحُورَ","Innahu thanna an lan yahoora","Sesungguhnya dia mengira bahwa dia tidak akan kembali (kepada Tuhannya)"],["بَلَىٰٓۚ إِنَّ رَبَّهُۥ كَانَ بِهِۦ بَصِيرٗا","Bala inna rabbahu kana bihi baseeran","Tidak demikian, sesungguhnya Tuhannya selalu melihatnya"],["فَلَآ أُقۡسِمُ بِٱلشَّفَقِ","Fala oqsimu bialshshafaqi","Maka Aku bersumpah demi cahaya merah pada waktu senja"],["وَٱلَّيۡلِ وَمَا وَسَقَ","Waallayli wama wasaqa","demi malam dan apa yang diselubunginya"],["وَٱلۡقَمَرِ إِذَا ٱتَّسَقَ","Waalqamari itha ittasaqa","demi bulan apabila jadi purnama"],["لَتَرۡكَبُنَّ طَبَقًا عَن طَبَقٖ","Latarkabunna tabaqan 'an tabaqin","sungguh, akan kamu jalani tingkat demi tingkat (dalam kehidupan)"],["فَمَا لَهُمۡ لَا يُؤۡمِنُونَ","Fama lahum la yuminoona","Maka mengapa mereka tidak mau beriman"],["وَإِذَا قُرِئَ عَلَيۡهِمُ ٱلۡقُرۡءَانُ لَا يَسۡجُدُونَۤ۩","Waitha quria 'alayhimu alquranu la yasjudoona","Dan apabila Alquran dibacakan kepada mereka, mereka tidak (mau) bersujud"],["بَلِ ٱلَّذِينَ كَفَرُواْ يُكَذِّبُونَ","Bali allatheena kafaroo yukaththiboona","bahkan orang-orang kafir itu mendustakan-(nya)"],["وَٱللَّهُ أَعۡلَمُ بِمَا يُوعُونَ","WaAllahu a'lamu bima yoo'oona","Dan Allah lebih mengetahui apa yang mereka sembunyikan (dalam hati mereka)"],["فَبَشِّرۡهُم بِعَذَابٍ أَلِيمٍ","Fabashshirhum bi'athabin aleemin","Maka sampaikanlah kepada mereka (ancaman) azab yang pedih"],["إِلَّا ٱلَّذِينَ ءَامَنُواْ وَعَمِلُواْ ٱلصَّـٰلِحَٰتِ لَهُمۡ أَجۡرٌ غَيۡرُ مَمۡنُونِۭ","Illa allatheena amanoo wa'amiloo alssalihati lahum ajrun ghayru mamnoonin","kecuali orang-orang yang beriman dan mengerjakan kebajikan, mereka akan mendapat pahala yang tidak putus-putusnya"]]},{"n":85,"ar":"البروج","tr":"Al-Buruj","id":"Gugusan Bintang","v":[["وَٱلسَّمَآءِ ذَاتِ ٱلۡبُرُوجِ","Waalssamai thati alburooji","Demi langit yang mempunyai gugusan bintang"],["وَٱلۡيَوۡمِ ٱلۡمَوۡعُودِ","Waalyawmi almaw'oodi","dan demi hari yang dijanjikan"],["وَشَاهِدٖ وَمَشۡهُودٖ","Washahidin wamashhoodin","Demi yang menyaksikan dan yang disaksikan"],["قُتِلَ أَصۡحَٰبُ ٱلۡأُخۡدُودِ","Qutila ashabu alukhdoodi","Binasalah orang-orang yang membuat parit (yaitu para pembesar Najran di Yaman)"],["ٱلنَّارِ ذَاتِ ٱلۡوَقُودِ","Alnnari thati alwaqoodi","yang berapi (yang mempunyai) kayu bakar"],["إِذۡ هُمۡ عَلَيۡهَا قُعُودٞ","Ith hum 'alayha qu'oodun","ketika mereka duduk di sekitarnya"],["وَهُمۡ عَلَىٰ مَا يَفۡعَلُونَ بِٱلۡمُؤۡمِنِينَ شُهُودٞ","Wahum 'ala ma yaf'aloona bialmumineena shuhoodun","sedang mereka menyaksikan apa yang mereka perbuat terhadap orang-orang mukmin"],["وَمَا نَقَمُواْ مِنۡهُمۡ إِلَّآ أَن يُؤۡمِنُواْ بِٱللَّهِ ٱلۡعَزِيزِ ٱلۡحَمِيدِ","Wama naqamoo minhum illa an yuminoo biAllahi al'azeezi alhameedi","Dan mereka menyiksa orang-orang mukmin itu hanya karena (orang-orang mukmin itu) beriman kepada Allah Yang Mahaperkasa, Maha Terpuji"],["ٱلَّذِي لَهُۥ مُلۡكُ ٱلسَّمَٰوَٰتِ وَٱلۡأَرۡضِۚ وَٱللَّهُ عَلَىٰ كُلِّ شَيۡءٖ شَهِيدٌ","Allathee lahu mulku alssamawati waalardi waAllahu 'ala kulli shayin shaheedun","yang memiliki kerajaan langit dan bumi. Dan Allah Maha Menyaksikan segala sesuatu"],["إِنَّ ٱلَّذِينَ فَتَنُواْ ٱلۡمُؤۡمِنِينَ وَٱلۡمُؤۡمِنَٰتِ ثُمَّ لَمۡ يَتُوبُواْ فَلَهُمۡ عَذَابُ جَهَنَّمَ وَلَهُمۡ عَذَابُ ٱلۡحَرِيقِ","Inna allatheena fatanoo almumineena waalmuminati thumma lam yatooboo falahum 'athabu jahannama walahum 'athabu alhareeqi","Sungguh, orang-orang yang mendatangkan cobaan (bencana, membunuh, menyiksa) kepada orang-orang mukmin laki-laki dan perempuan lalu mereka tidak bertobat, maka mereka akan mendapat azab Jahanam dan mereka akan mendapat azab (neraka) yang membakar"],["إِنَّ ٱلَّذِينَ ءَامَنُواْ وَعَمِلُواْ ٱلصَّـٰلِحَٰتِ لَهُمۡ جَنَّـٰتٞ تَجۡرِي مِن تَحۡتِهَا ٱلۡأَنۡهَٰرُۚ ذَٰلِكَ ٱلۡفَوۡزُ ٱلۡكَبِيرُ","Inna allatheena amanoo wa'amiloo alssalihati lahum jannatun tajree min tahtiha alanharu thalika alfawzu alkabeeru","Sungguh, orang-orang yang beriman dan mengerjakan kebajikan, mereka akan mendapat surga yang mengalir di bawahnya sungai-sungai, itulah kemenangan yang agung"],["إِنَّ بَطۡشَ رَبِّكَ لَشَدِيدٌ","Inna batsha rabbika lashadeedun","Sungguh, azab Tuhanmu sangat keras"],["إِنَّهُۥ هُوَ يُبۡدِئُ وَيُعِيدُ","Innahu huwa yubdio wayu'eedu","Sungguh, Dialah yang memulai penciptaan (makhluk) dan yang menghidupkannya (kembali)"],["وَهُوَ ٱلۡغَفُورُ ٱلۡوَدُودُ","Wahuwa alghafooru alwadoodu","Dan Dialah Yang Maha Pengampun, Maha Pengasih"],["ذُو ٱلۡعَرۡشِ ٱلۡمَجِيدُ","Thoo al'arshi almajeedi","Yang memiliki Arasy, lagi Mahamulia"],["فَعَّالٞ لِّمَا يُرِيدُ","Fa''alun lima yureedu","Mahakuasa berbuat apa yang Dia kehendaki"],["هَلۡ أَتَىٰكَ حَدِيثُ ٱلۡجُنُودِ","Hal ataka hadeethu aljunoodi","Sudahkah sampai kepadamu berita tentang bala tentara (penentang)"],["فِرۡعَوۡنَ وَثَمُودَ","Fir'awna wathamooda","(yaitu) Fir'aun dan Samud"],["بَلِ ٱلَّذِينَ كَفَرُواْ فِي تَكۡذِيبٖ","Bali allatheena kafaroo fee taktheebin","Memang orang-orang kafir (selalu) mendustakan"],["وَٱللَّهُ مِن وَرَآئِهِم مُّحِيطُۢ","WaAllahu min waraihim muheetun","padahal Allah mengepung dari belakang mereka (sehingga tidak dapat lolos)"],["بَلۡ هُوَ قُرۡءَانٞ مَّجِيدٞ","Bal huwa quranun majeedun","Bahkan (yang didustakan itu) ialah Alquran yang mulia"],["فِي لَوۡحٖ مَّحۡفُوظِۭ","Fee lawhin mahfoothin","yang (tersimpan) dalam (tempat) yang terjaga (Lauḥ Maḥfūẓ)"]]},{"n":86,"ar":"الطارق","tr":"At-Tariq","id":"Yang Datang di Malam Hari","v":[["وَٱلسَّمَآءِ وَٱلطَّارِقِ","Waalssamai waalttariqi","Demi langit dan yang datang pada malam hari"],["وَمَآ أَدۡرَىٰكَ مَا ٱلطَّارِقُ","Wama adraka ma alttariqu","Dan tahukah kamu apakah yang datang pada malam hari itu"],["ٱلنَّجۡمُ ٱلثَّاقِبُ","Alnnajmu alththaqibu","(Yaitu) bintang yang bersinar tajam"],["إِن كُلُّ نَفۡسٖ لَّمَّا عَلَيۡهَا حَافِظٞ","In kullu nafsin lamma 'alayha hafithun","setiap orang pasti ada penjaganya"],["فَلۡيَنظُرِ ٱلۡإِنسَٰنُ مِمَّ خُلِقَ","Falyanthuri alinsanu mimma khuliqa","Maka hendaklah manusia memperhatikan dari apa dia diciptakan"],["خُلِقَ مِن مَّآءٖ دَافِقٖ","Khuliqa min main dafiqin","Dia diciptakan dari air (mani) yang terpancar"],["يَخۡرُجُ مِنۢ بَيۡنِ ٱلصُّلۡبِ وَٱلتَّرَآئِبِ","Yakhruju min bayni alssulbi waalttaraibi","yang keluar dari antara tulang punggung (sulbi) dan tulang dada"],["إِنَّهُۥ عَلَىٰ رَجۡعِهِۦ لَقَادِرٞ","Innahu 'ala raj'ihi laqadirun","Sungguh, Allah benar-benar kuasa untuk mengembalikannya (hidup setelah mati)"],["يَوۡمَ تُبۡلَى ٱلسَّرَآئِرُ","Yawma tubla alssarairu","Pada hari ditampakkan segala rahasia"],["فَمَا لَهُۥ مِن قُوَّةٖ وَلَا نَاصِرٖ","Fama lahu min quwwatin wala nasirin","maka manusia tidak lagi mempunyai suatu kekuatan dan tidak (pula) ada penolong"],["وَٱلسَّمَآءِ ذَاتِ ٱلرَّجۡعِ","Waalssamai thati alrraj'i","Demi langit yang mengandung hujan"],["وَٱلۡأَرۡضِ ذَاتِ ٱلصَّدۡعِ","Waalardi thati alssad'i","dan bumi yang mempunyai tumbuh-tumbuhan"],["إِنَّهُۥ لَقَوۡلٞ فَصۡلٞ","Innahu laqawlun faslun","sungguh, (Alquran) itu benar-benar firman pemisah (antara yang hak dan yang batil)"],["وَمَا هُوَ بِٱلۡهَزۡلِ","Wama huwa bialhazli","dan (Alquran) itu bukanlah senda gurauan"],["إِنَّهُمۡ يَكِيدُونَ كَيۡدٗا","Innahum yakeedoona kaydan","Sungguh, mereka (orang kafir) merencanakan tipu daya yang jahat"],["وَأَكِيدُ كَيۡدٗا","Waakeedu kaydan","dan Aku pun membuat rencana (tipu daya) yang jitu"],["فَمَهِّلِ ٱلۡكَٰفِرِينَ أَمۡهِلۡهُمۡ رُوَيۡدَۢا","Famahhili alkafireena amhilhum ruwaydan","Karena itu berilah penangguhan kepada orang-orang kafir. Berilah mereka kesempatan untuk sementara waktu"]]},{"n":87,"ar":"الأعلى","tr":"Al-A'la","id":"Yang Paling Tinggi","v":[["سَبِّحِ ٱسۡمَ رَبِّكَ ٱلۡأَعۡلَى","Sabbihi isma rabbika ala'la","Sucikanlah nama Tuhanmu Yang Mahatinggi"],["ٱلَّذِي خَلَقَ فَسَوَّىٰ","Allathee khalaqa fasawwa","yang menciptakan, lalu menyempurnakan (penciptaan-Nya)"],["وَٱلَّذِي قَدَّرَ فَهَدَىٰ","Waallathee qaddara fahada","yang menentukan kadar (masing-masing) dan memberi petunjuk"],["وَٱلَّذِيٓ أَخۡرَجَ ٱلۡمَرۡعَىٰ","Waallathee akhraja almar'a","dan Yang menumbuhkan rerumputan"],["فَجَعَلَهُۥ غُثَآءً أَحۡوَىٰ","Faja'alahu ghuthaan ahwa","lalu dijadikan-Nya (rumput-rumput) itu kering kehitam-hitaman"],["سَنُقۡرِئُكَ فَلَا تَنسَىٰٓ","Sanuqrioka fala tansa","Kami akan membacakan (Alquran) kepadamu (Muhammad) sehingga engkau tidak akan lupa"],["إِلَّا مَا شَآءَ ٱللَّهُۚ إِنَّهُۥ يَعۡلَمُ ٱلۡجَهۡرَ وَمَا يَخۡفَىٰ","Illa ma shaa Allahu innahu ya'lamu aljahra wama yakhfa","kecuali jika Allah menghendaki. Sungguh, Dia mengetahui yang terang dan yang tersembunyi"],["وَنُيَسِّرُكَ لِلۡيُسۡرَىٰ","Wanuyassiruka lilyusra","Dan Kami akan memudahkan bagimu ke jalan kemudahan (mencapai kebahagian dunia dan akhirat)"],["فَذَكِّرۡ إِن نَّفَعَتِ ٱلذِّكۡرَىٰ","Fathakkir in nafa'ati alththikra","oleh sebab itu berikanlah peringatan, karena peringatan itu bermanfaat"],["سَيَذَّكَّرُ مَن يَخۡشَىٰ","Sayaththakkaru man yakhsha","orang yang takut (kepada Allah) akan mendapat pelajaran"],["وَيَتَجَنَّبُهَا ٱلۡأَشۡقَى","Wayatajannabuha alashqa","dan orang yang celaka (kafir) akan menjauhinya"],["ٱلَّذِي يَصۡلَى ٱلنَّارَ ٱلۡكُبۡرَىٰ","Allathee yasla alnnara alkubra","(yaitu) orang yang akan memasuki api yang besar (neraka)"],["ثُمَّ لَا يَمُوتُ فِيهَا وَلَا يَحۡيَىٰ","Thumma la yamootu feeha wala yahya","selanjutnya dia di sana tidak mati dan tidak (pula) hidup"],["قَدۡ أَفۡلَحَ مَن تَزَكَّىٰ","Qad aflaha man tazakka","Sungguh beruntung orang yang menyucikan diri (dengan beriman)"],["وَذَكَرَ ٱسۡمَ رَبِّهِۦ فَصَلَّىٰ","Wathakara isma rabbihi fasalla","dan mengingat nama Tuhannya, lalu dia salat"],["بَلۡ تُؤۡثِرُونَ ٱلۡحَيَوٰةَ ٱلدُّنۡيَا","Bal tuthiroona alhayata alddunya","Sedangkan kamu (orang-orang kafir) memilih kehidupan dunia"],["وَٱلۡأٓخِرَةُ خَيۡرٞ وَأَبۡقَىٰٓ","Waalakhiratu khayrun waabqa","padahal kehidupan akhirat itu lebih baik dan lebih kekal"],["إِنَّ هَٰذَا لَفِي ٱلصُّحُفِ ٱلۡأُولَىٰ","Inna hatha lafee alssuhufi aloola","Sesungguhnya ini terdapat dalam kitab-kitab yang dahulu"],["صُحُفِ إِبۡرَٰهِيمَ وَمُوسَىٰ","Suhufi ibraheema wamoosa","(yaitu) kitab-kitab Ibrahim dan Musa"]]},{"n":88,"ar":"الغاشية","tr":"Al-Ghashiyah","id":"Hari Pembalasan","v":[["هَلۡ أَتَىٰكَ حَدِيثُ ٱلۡغَٰشِيَةِ","Hal ataka hadeethu alghashiyati","Sudahkah sampai kepadamu berita tentang (hari Kiamat)"],["وُجُوهٞ يَوۡمَئِذٍ خَٰشِعَةٌ","Wujoohun yawmaithin khashi'atun","Pada hari itu banyak wajah yang tertunduk hina"],["عَامِلَةٞ نَّاصِبَةٞ","'amilatun nasibatun","(karena) bekerja keras lagi kepayahan"],["تَصۡلَىٰ نَارًا حَامِيَةٗ","Tasla naran hamiyatan","mereka memasuki api yang sangat panas (neraka)"],["تُسۡقَىٰ مِنۡ عَيۡنٍ ءَانِيَةٖ","Tusqa min 'aynin aniyatin","diberi minum dari sumber mata air yang sangat panas"],["لَّيۡسَ لَهُمۡ طَعَامٌ إِلَّا مِن ضَرِيعٖ","Laysa lahum ta'amun illa min daree'in","Tidak ada makanan bagi mereka selain dari pohon yang berduri"],["لَّا يُسۡمِنُ وَلَا يُغۡنِي مِن جُوعٖ","La yusminu wala yughnee min joo'in","yang tidak menggemukkan dan tidak menghilangkan lapar"],["وُجُوهٞ يَوۡمَئِذٖ نَّاعِمَةٞ","Wujoohun yawmaithin na'imatun","Pada hari itu banyak (pula) wajah yang berseri-seri"],["لِّسَعۡيِهَا رَاضِيَةٞ","Lisa'yiha radiyatun","merasa senang karena usahanya (sendiri)"],["فِي جَنَّةٍ عَالِيَةٖ","Fee jannatin 'aliyatin","(mereka) dalam surga yang tinggi"],["لَّا تَسۡمَعُ فِيهَا لَٰغِيَةٗ","La tasma'u feeha laghiyatan","di sana (kamu) tidak mendengar perkataan yang tidak berguna"],["فِيهَا عَيۡنٞ جَارِيَةٞ","Feeha 'aynun jariyatun","Di sana ada mata air yang mengalir"],["فِيهَا سُرُرٞ مَّرۡفُوعَةٞ","Feeha sururun marfoo'atun","Di sana ada dipan-dipan yang ditinggikan"],["وَأَكۡوَابٞ مَّوۡضُوعَةٞ","Waakwabun mawdoo'atun","dan gelas-gelas yang tersedia (di dekatnya)"],["وَنَمَارِقُ مَصۡفُوفَةٞ","Wanamariqu masfoofatun","dan bantal-bantal sandaran yang tersusun"],["وَزَرَابِيُّ مَبۡثُوثَةٌ","Wazarabiyyu mabthoothatun","dan permadani-permadani yang terhampar"],["أَفَلَا يَنظُرُونَ إِلَى ٱلۡإِبِلِ كَيۡفَ خُلِقَتۡ","Afala yanthuroona ila alibili kayfa khuliqat","Maka tidakkah mereka memperhatikan unta, bagaimana diciptakan"],["وَإِلَى ٱلسَّمَآءِ كَيۡفَ رُفِعَتۡ","Waila alssamai kayfa rufi'at","Dan langit, bagaimana ditinggikan"],["وَإِلَى ٱلۡجِبَالِ كَيۡفَ نُصِبَتۡ","Waila aljibali kayfa nusibat","Dan gunung-gunung bagaimana ditegakkan"],["وَإِلَى ٱلۡأَرۡضِ كَيۡفَ سُطِحَتۡ","Waila alardi kayfa sutihat","Dan bumi bagaimana dihamparkan"],["فَذَكِّرۡ إِنَّمَآ أَنتَ مُذَكِّرٞ","Fathakkir innama anta muthakkirun","Maka berilah peringatan, karena sesungguhnya engkau (Muhammad) hanyalah pemberi peringatan"],["لَّسۡتَ عَلَيۡهِم بِمُصَيۡطِرٍ","Lasta 'alayhim bimusaytirin","Engkau bukanlah orang yang berkuasa atas mereka"],["إِلَّا مَن تَوَلَّىٰ وَكَفَرَ","Illa man tawalla wakafara","kecuali (jika ada) orang yang berpaling dan kafir"],["فَيُعَذِّبُهُ ٱللَّهُ ٱلۡعَذَابَ ٱلۡأَكۡبَرَ","Fayu'aththibuhu Allahu al'athaba alakbara","maka Allah akan mengazabnya dengan azab yang besar"],["إِنَّ إِلَيۡنَآ إِيَابَهُمۡ","Inna ilayna iyabahum","Sungguh, kepada Kami lah mereka kembali"],["ثُمَّ إِنَّ عَلَيۡنَا حِسَابَهُم","Thumma inna 'alayna hisabahum","kemudian sesungguhnya (kewajiban) Kami lah membuat perhitungan atas mereka"]]},{"n":89,"ar":"الفجر","tr":"Al-Fajr","id":"Fajar","v":[["وَٱلۡفَجۡرِ","Waalfajri","Demi fajar"],["وَلَيَالٍ عَشۡرٖ","Walayalin 'ashrin","demi malam yang sepuluh"],["وَٱلشَّفۡعِ وَٱلۡوَتۡرِ","Waalshshaf'i waalwatri","demi yang genap dan yang ganjil"],["وَٱلَّيۡلِ إِذَا يَسۡرِ","Waallayli itha yasri","demi malam apabila berlalu"],["هَلۡ فِي ذَٰلِكَ قَسَمٞ لِّذِي حِجۡرٍ","Hal fee thalika qasamun lithee hijrin","Adakah pada yang demikian itu terdapat sumpah (yang dapat diterima) bagi orang-orang yang berakal"],["أَلَمۡ تَرَ كَيۡفَ فَعَلَ رَبُّكَ بِعَادٍ","Alam tara kayfa fa'ala rabbuka bi'adin","Tidakkah engkau (Muhammad) memperhatikan bagaimana Tuhanmu berbuat terhadap (kaum) 'Ād"],["إِرَمَ ذَاتِ ٱلۡعِمَادِ","Irama thati al'imadi","(yaitu) penduduk Iram (ibukota kaum 'Ād) yang mempunyai bangunan-bangunan yang tinggi"],["ٱلَّتِي لَمۡ يُخۡلَقۡ مِثۡلُهَا فِي ٱلۡبِلَٰدِ","Allatee lam yukhlaq mithluha fee albiladi","yang belum pernah dibangun (suatu kota) seperti itu, di negeri-negeri lain"],["وَثَمُودَ ٱلَّذِينَ جَابُواْ ٱلصَّخۡرَ بِٱلۡوَادِ","Wathamooda allatheena jaboo alssakhra bialwadi","dan (terhadap) kaum Samud yang memotong batu-batu besar di lembah"],["وَفِرۡعَوۡنَ ذِي ٱلۡأَوۡتَادِ","Wafir'awna thee alawtadi","dan (terhadap) Fir'aun yang mempunyai pasak-pasak (bangunan yang besar)"],["ٱلَّذِينَ طَغَوۡاْ فِي ٱلۡبِلَٰدِ","Allatheena taghaw fee albiladi","yang berbuat sewenang-wenang dalam negeri"],["فَأَكۡثَرُواْ فِيهَا ٱلۡفَسَادَ","Faaktharoo feeha alfasada","lalu mereka banyak berbuat kerusakan dalam negeri itu"],["فَصَبَّ عَلَيۡهِمۡ رَبُّكَ سَوۡطَ عَذَابٍ","Fasabba 'alayhim rabbuka sawta 'athabin","karena itu Tuhanmu menimpakan cemeti azab kepada mereka"],["إِنَّ رَبَّكَ لَبِٱلۡمِرۡصَادِ","Inna rabbaka labialmirsadi","sungguh, Tuhanmu benar-benar mengawasi"],["فَأَمَّا ٱلۡإِنسَٰنُ إِذَا مَا ٱبۡتَلَىٰهُ رَبُّهُۥ فَأَكۡرَمَهُۥ وَنَعَّمَهُۥ فَيَقُولُ رَبِّيٓ أَكۡرَمَنِ","Faamma alinsanu itha ma ibtalahu rabbuhu faakramahu wana''amahu fayaqoolu rabbee akramani","Adapun manusia, apabila Tuhan mengujinya lalu memuliakannya dan memberinya kesenangan, maka dia berkata, \"Tuhanku telah memuliakanku"],["وَأَمَّآ إِذَا مَا ٱبۡتَلَىٰهُ فَقَدَرَ عَلَيۡهِ رِزۡقَهُۥ فَيَقُولُ رَبِّيٓ أَهَٰنَنِ","Waamma itha ma ibtalahu faqadara 'alayhi rizqahu fayaqoolu rabbee ahanani","Namun apabila Tuhan mengujinya lalu membatasi rezekinya, maka dia berkata, \"Tuhanku telah menghinaku"],["كَلَّاۖ بَل لَّا تُكۡرِمُونَ ٱلۡيَتِيمَ","Kalla bal la tukrimoona alyateema","Sekali-kali tidak! Bahkan kamu tidak memuliakan anak yatim"],["وَلَا تَحَـٰٓضُّونَ عَلَىٰ طَعَامِ ٱلۡمِسۡكِينِ","Wala tahaddoona 'ala ta'ami almiskeeni","dan kamu tidak saling mengajak memberi makan orang miskin"],["وَتَأۡكُلُونَ ٱلتُّرَاثَ أَكۡلٗا لَّمّٗا","Watakuloona altturatha aklan lamman","sedangkan kamu memakan harta warisan dengan cara mencampurbaurkan (yang halal dan yang haram)"],["وَتُحِبُّونَ ٱلۡمَالَ حُبّٗا جَمّٗا","Watuhibboona almala hubban jamman","dan kamu mencintai harta dengan kecintaan yang berlebihan"],["كَلَّآۖ إِذَا دُكَّتِ ٱلۡأَرۡضُ دَكّٗا دَكّٗا","Kalla itha dukkati alardu dakkan dakkan","Sekali-kali tidak! Apabila bumi diguncangkan berturut-turut (berbenturan)"],["وَجَآءَ رَبُّكَ وَٱلۡمَلَكُ صَفّٗا صَفّٗا","Wajaa rabbuka waalmalaku saffan saffan","dan datanglah Tuhanmu; dan malaikat berbaris-baris"],["وَجِاْيٓءَ يَوۡمَئِذِۭ بِجَهَنَّمَۚ يَوۡمَئِذٖ يَتَذَكَّرُ ٱلۡإِنسَٰنُ وَأَنَّىٰ لَهُ ٱلذِّكۡرَىٰ","Wajeea yawmaithin bijahannama yawmaithin yatathakkaru alinsanu waanna lahu alththikra","dan pada hari itu diperlihatkan neraka Jahanam; pada hari itu sadarlah manusia, tetapi tidak berguna lagi baginya kesadaran itu"],["يَقُولُ يَٰلَيۡتَنِي قَدَّمۡتُ لِحَيَاتِي","Yaqoolu ya laytanee qaddamtu lihayatee","Dia berkata, \"Alangkah baiknya sekiranya dahulu aku mengerjakan (kebajikan) untuk hidupku ini"],["فَيَوۡمَئِذٖ لَّا يُعَذِّبُ عَذَابَهُۥٓ أَحَدٞ","Fayawmaithin la yu'aththibu 'athabahu ahadun","Maka pada hari itu tidak ada seorang pun yang mengazab seperti azab-Nya (yang adil)"],["وَلَا يُوثِقُ وَثَاقَهُۥٓ أَحَدٞ","Wala yoothiqu wathaqahu ahadun","dan tidak ada seorang pun yang mengikat seperti ikatan-Nya"],["يَـٰٓأَيَّتُهَا ٱلنَّفۡسُ ٱلۡمُطۡمَئِنَّةُ","Ya ayyatuha alnnafsu almutmainnatu","Wahai jiwa yang tenang"],["ٱرۡجِعِيٓ إِلَىٰ رَبِّكِ رَاضِيَةٗ مَّرۡضِيَّةٗ","Irji'ee ila rabbiki radiyatan mardiyyatan","Kembalilah kepada Tuhanmu dengan hati yang rida dan diridai-Nya"],["فَٱدۡخُلِي فِي عِبَٰدِي","Faodkhulee fee 'ibadee","Maka masuklah ke dalam golongan hamba-hamba-Ku"],["وَٱدۡخُلِي جَنَّتِي","Waodkhulee jannatee","dan masuklah ke dalam surga-Ku"]]},{"n":90,"ar":"البلد","tr":"Al-Balad","id":"Negeri","v":[["لَآ أُقۡسِمُ بِهَٰذَا ٱلۡبَلَدِ","La oqsimu bihatha albaladi","Aku bersumpah dengan negeri ini (Mekkah)"],["وَأَنتَ حِلُّۢ بِهَٰذَا ٱلۡبَلَدِ","Waanta hillun bihatha albaladi","dan engkau (Muhammad), bertempat di negeri (Mekkah) ini"],["وَوَالِدٖ وَمَا وَلَدَ","Wawalidin wama walada","dan demi (pertalian) bapak dan anaknya"],["لَقَدۡ خَلَقۡنَا ٱلۡإِنسَٰنَ فِي كَبَدٍ","Laqad khalaqna alinsana fee kabadin","Sungguh, Kami telah menciptakan manusia berada dalam susah payah"],["أَيَحۡسَبُ أَن لَّن يَقۡدِرَ عَلَيۡهِ أَحَدٞ","Ayahsabu an lan yaqdira 'alayhi ahadun","Apakah dia (manusia) itu mengira bahwa tidak ada sesuatu pun yang berkuasa atasnya"],["يَقُولُ أَهۡلَكۡتُ مَالٗا لُّبَدًا","Yaqoolu ahlaktu malan lubadan","Dia mengatakan, \"Aku telah menghabiskan harta yang banyak"],["أَيَحۡسَبُ أَن لَّمۡ يَرَهُۥٓ أَحَدٌ","Ayahsabu an lam yarahu ahadun","Apakah dia mengira bahwa tidak ada sesuatu pun yang melihatnya"],["أَلَمۡ نَجۡعَل لَّهُۥ عَيۡنَيۡنِ","Alam naj'al lahu 'aynayni","Bukankah Kami telah menjadikan untuknya sepasang mata"],["وَلِسَانٗا وَشَفَتَيۡنِ","Walisanan washafatayni","dan lidah dan sepasang bibir"],["وَهَدَيۡنَٰهُ ٱلنَّجۡدَيۡنِ","Wahadaynahu alnnajdayni","Dan Kami telah menunjukkan kepadanya dua jalan (kebajikkan dan kejahatan)"],["فَلَا ٱقۡتَحَمَ ٱلۡعَقَبَةَ","Fala iqtahama al'aqabata","Tetapi dia tidak menempuh jalan yang mendaki dan sukar"],["وَمَآ أَدۡرَىٰكَ مَا ٱلۡعَقَبَةُ","Wama adraka ma al'aqabatu","Dan tahukah kamu apakah jalan yang mendaki dan sukar itu"],["فَكُّ رَقَبَةٍ","Fakku raqabatin","(Yaitu) membebaskan budak (hamba sahaya)"],["أَوۡ إِطۡعَٰمٞ فِي يَوۡمٖ ذِي مَسۡغَبَةٖ","Aw it'amun fee yawmin thee masghabatin","atau memberi makan pada hari terjadi kelaparan"],["يَتِيمٗا ذَا مَقۡرَبَةٍ","Yateeman tha maqrabatin","(kepada) anak yatim yang ada hubungan kerabat"],["أَوۡ مِسۡكِينٗا ذَا مَتۡرَبَةٖ","Aw miskeenan tha matrabatin","atau orang miskin yang sangat fakir"],["ثُمَّ كَانَ مِنَ ٱلَّذِينَ ءَامَنُواْ وَتَوَاصَوۡاْ بِٱلصَّبۡرِ وَتَوَاصَوۡاْ بِٱلۡمَرۡحَمَةِ","Thumma kana mina allatheena amanoo watawasaw bialssabri watawasaw bialmarhamati","Kemudian dia termasuk orang-orang yang beriman, dan saling berpesan untuk bersabar dan saling berpesan untuk berkasih sayang"],["أُوْلَـٰٓئِكَ أَصۡحَٰبُ ٱلۡمَيۡمَنَةِ","Olaika ashabu almaymanati","Mereka (orang-orang yang beriman dan saling berpesan itu) adalah golongan kanan"],["وَٱلَّذِينَ كَفَرُواْ بِـَٔايَٰتِنَا هُمۡ أَصۡحَٰبُ ٱلۡمَشۡـَٔمَةِ","Waallatheena kafaroo biayatina hum ashabu almashamati","Dan orang-orang yang kafir kepada ayat-ayat Kami, mereka itu adalah golongan kiri"],["عَلَيۡهِمۡ نَارٞ مُّؤۡصَدَةُۢ","'alayhim narun musadatun","Mereka berada dalam neraka yang ditutup rapat"]]},{"n":91,"ar":"الشمس","tr":"Ash-Shams","id":"Matahari","v":[["وَٱلشَّمۡسِ وَضُحَىٰهَا","Waalshshamsi waduhaha","Demi matahari dan sinarnya pada pagi hari"],["وَٱلۡقَمَرِ إِذَا تَلَىٰهَا","Waalqamari itha talaha","demi bulan apabila mengiringinya"],["وَٱلنَّهَارِ إِذَا جَلَّىٰهَا","Waalnnahari itha jallaha","demi siang apabila menampakkannya"],["وَٱلَّيۡلِ إِذَا يَغۡشَىٰهَا","Waallayli itha yaghshaha","demi malam apabila menutupinya (gelap gulita)"],["وَٱلسَّمَآءِ وَمَا بَنَىٰهَا","Waalssamai wama banaha","demi langit serta perancangannya (yang menakjubkan)"],["وَٱلۡأَرۡضِ وَمَا طَحَىٰهَا","Waalardi wama tahaha","demi bumi serta penghamparannya"],["وَنَفۡسٖ وَمَا سَوَّىٰهَا","Wanafsin wama sawwaha","demi jiwa serta penyempurnaan (ciptaan)nya"],["فَأَلۡهَمَهَا فُجُورَهَا وَتَقۡوَىٰهَا","Faalhamaha fujooraha wataqwaha","maka Dia mengilhamkan kepadanya (jalan) kejahatan dan ketakwaannya"],["قَدۡ أَفۡلَحَ مَن زَكَّىٰهَا","Qad aflaha man zakkaha","sungguh beruntung orang yang menyucikannya (jiwa itu)"],["وَقَدۡ خَابَ مَن دَسَّىٰهَا","Waqad khaba man dassaha","dan sungguh rugi orang yang mengotorinya"],["كَذَّبَتۡ ثَمُودُ بِطَغۡوَىٰهَآ","Kaththabat thamoodu bitaghwaha","(Kaum) Samud telah mendustakan (rasulnya) karena mereka melampaui batas (zalim)"],["إِذِ ٱنۢبَعَثَ أَشۡقَىٰهَا","Ithi inba'atha ashqaha","ketika bangkit orang yang paling celaka di antara mereka"],["فَقَالَ لَهُمۡ رَسُولُ ٱللَّهِ نَاقَةَ ٱللَّهِ وَسُقۡيَٰهَا","Faqala lahum rasoolu Allahi naqata Allahi wasuqyaha","lalu Rasul Allah (Saleh) berkata kepada mereka, \"(Biarkanlah) unta betina dari Allah ini dengan minumannya"],["فَكَذَّبُوهُ فَعَقَرُوهَا فَدَمۡدَمَ عَلَيۡهِمۡ رَبُّهُم بِذَنۢبِهِمۡ فَسَوَّىٰهَا","Fakaththaboohu fa'aqarooha fadamdama 'alayhim rabbuhum bithanbihim fasawwaha","Namun mereka mendustakannya dan menyembelihnya, karena itu Tuhan membinasakan mereka karena dosanya, lalu diratakan-Nya (dengan tanah)"],["وَلَا يَخَافُ عُقۡبَٰهَا","Wala yakhafu 'uqbaha","Dan Dia tidak takut terhadap akibatnya"]]},{"n":92,"ar":"الليل","tr":"Al-Layl","id":"Malam","v":[["وَٱلَّيۡلِ إِذَا يَغۡشَىٰ","Waallayli itha yaghsha","Demi malam apabila menutupi (cahaya siang)"],["وَٱلنَّهَارِ إِذَا تَجَلَّىٰ","Waalnnahari itha tajalla","demi siang bila terang benderang"],["وَمَا خَلَقَ ٱلذَّكَرَ وَٱلۡأُنثَىٰٓ","Wama khalaqa alththakara waalontha","demi penciptaan laki-laki dan perempuan"],["إِنَّ سَعۡيَكُمۡ لَشَتَّىٰ","Inna sa'yakum lashatta","sungguh, usahamu memang beraneka macam"],["فَأَمَّا مَنۡ أَعۡطَىٰ وَٱتَّقَىٰ","Faamma man a'ta waittaqa","Maka barangsiapa memberikan (hartanya di jalan Allah) dan bertakwa"],["وَصَدَّقَ بِٱلۡحُسۡنَىٰ","Wasaddaqa bialhusna","dan membenarkan (adanya pahala) yang terbaik (surga)"],["فَسَنُيَسِّرُهُۥ لِلۡيُسۡرَىٰ","Fasanuyassiruhu lilyusra","maka akan Kami mudahkan baginya jalan menuju kemudahan (kebahagiaan)"],["وَأَمَّا مَنۢ بَخِلَ وَٱسۡتَغۡنَىٰ","Waamma man bakhila waistaghna","Dan adapun orang yang kikir dan merasa dirinya cukup (tidak perlu pertolongan Allah)"],["وَكَذَّبَ بِٱلۡحُسۡنَىٰ","Wakaththaba bialhusna","serta mendustakan (pahala) yang terbaik"],["فَسَنُيَسِّرُهُۥ لِلۡعُسۡرَىٰ","Fasanuyassiruhu lil'usra","maka akan Kami mudahkan baginya jalan menuju kesukaran (kesengsaraan)"],["وَمَا يُغۡنِي عَنۡهُ مَالُهُۥٓ إِذَا تَرَدَّىٰٓ","Wama yughnee 'anhu maluhu itha taradda","Dan hartanya tidak bermanfaat baginya apabila dia telah binasa"],["إِنَّ عَلَيۡنَا لَلۡهُدَىٰ","Inna 'alayna lalhuda","Sesungguhnya Kami lah yang memberi petunjuk"],["وَإِنَّ لَنَا لَلۡأٓخِرَةَ وَٱلۡأُولَىٰ","Wainna lana lalakhirata waaloola","dan sesungguhnya milik Kami lah akhirat dan dunia"],["فَأَنذَرۡتُكُمۡ نَارٗا تَلَظَّىٰ","Faanthartukum naran talaththa","Maka aku memperingatkan kamu dengan neraka yang menyala-nyala"],["لَا يَصۡلَىٰهَآ إِلَّا ٱلۡأَشۡقَى","La yaslaha illa alashqa","yang hanya dimasuki oleh orang yang paling celaka"],["ٱلَّذِي كَذَّبَ وَتَوَلَّىٰ","Allathee kaththaba watawalla","yang mendustakan (kebenaran) dan berpaling (dari iman)"],["وَسَيُجَنَّبُهَا ٱلۡأَتۡقَى","Wasayujannabuha alatqa","Dan akan dijauhkan darinya (neraka) orang yang paling bertakwa"],["ٱلَّذِي يُؤۡتِي مَالَهُۥ يَتَزَكَّىٰ","Allathee yutee malahu yatazakka","yang menginfakkan hartanya (di jalan Allah) untuk membersihkan (dirinya)"],["وَمَا لِأَحَدٍ عِندَهُۥ مِن نِّعۡمَةٖ تُجۡزَىٰٓ","Wama liahadin 'indahu min ni'matin tujza","dan tidak ada seorang pun memberikan suatu nikmat padanya yang harus dibalasnya"],["إِلَّا ٱبۡتِغَآءَ وَجۡهِ رَبِّهِ ٱلۡأَعۡلَىٰ","Illa ibtighaa wajhi rabbihi ala'la","tetapi (dia memberikan itu semata-mata) karena mencari keridaan Tuhannya Yang Mahatinggi"],["وَلَسَوۡفَ يَرۡضَىٰ","Walasawfa yarda","Dan niscaya kelak dia akan mendapat kesenangan (yang sempurna)"]]},{"n":93,"ar":"الضحى","tr":"Ad-Duhaa","id":"Waktu Dhuha","v":[["وَٱلضُّحَىٰ","Waaldduha","Demi waktu duha (ketika matahari naik sepenggalan)"],["وَٱلَّيۡلِ إِذَا سَجَىٰ","Waallayli itha saja","dan demi malam apabila telah sunyi"],["مَا وَدَّعَكَ رَبُّكَ وَمَا قَلَىٰ","Ma wadda'aka rabbuka wama qala","Tuhanmu tidak meninggalkan engkau (Muhammad) dan tidak (pula) membencimu"],["وَلَلۡأٓخِرَةُ خَيۡرٞ لَّكَ مِنَ ٱلۡأُولَىٰ","Walalakhiratu khayrun laka mina aloola","dan sungguh, yang kemudian itu lebih baik bagimu daripada yang permulaan"],["وَلَسَوۡفَ يُعۡطِيكَ رَبُّكَ فَتَرۡضَىٰٓ","Walasawfa yu'teeka rabbuka fatarda","Dan sungguh, kelak Tuhanmu pasti memberikan karunia-Nya kepadamu, sehingga engkau menjadi puas"],["أَلَمۡ يَجِدۡكَ يَتِيمٗا فَـَٔاوَىٰ","Alam yajidka yateeman faawa","Bukankah Dia mendapatimu sebagai seorang yatim, lalu Dia melindungi(mu)"],["وَوَجَدَكَ ضَآلّٗا فَهَدَىٰ","Wawajadaka dallan fahada","(Dan Dia mendapatimu sebagai seorang yang bingung,912) lalu Dia memberikan petunjuk"],["وَوَجَدَكَ عَآئِلٗا فَأَغۡنَىٰ","Wawajadaka 'ailan faaghna","Dan Dia mendapatimu sebagai seorang yang kekurangan, lalu Dia memberikan kecukupan"],["فَأَمَّا ٱلۡيَتِيمَ فَلَا تَقۡهَرۡ","Faamma alyateema fala taqhar","Maka terhadap anak yatim janganlah engkau berlaku sewenang-wenang"],["وَأَمَّا ٱلسَّآئِلَ فَلَا تَنۡهَرۡ","Waamma alssaila fala tanhar","Dan terhadap orang yang meminta-minta, janganlah engkau menghardik(nya)"],["وَأَمَّا بِنِعۡمَةِ رَبِّكَ فَحَدِّثۡ","Waamma bini'mati rabbika fahaddith","Dan terhadap nikmat Tuhanmu, hendaklah engkau nyatakan (dengan bersyukur)"]]},{"n":94,"ar":"الشرح","tr":"Ash-Sharh","id":"Melapangkan","v":[["أَلَمۡ نَشۡرَحۡ لَكَ صَدۡرَكَ","Alam nashrah laka sadraka","Bukankah kami telah melapangkan dadamu (Muhammad)"],["وَوَضَعۡنَا عَنكَ وِزۡرَكَ","Wawada'na 'anka wizraka","dan kami pun telah menurunkan beban darimu"],["ٱلَّذِيٓ أَنقَضَ ظَهۡرَكَ","Allathee anqada thahraka","yang memberatkan punggungmu"],["وَرَفَعۡنَا لَكَ ذِكۡرَكَ","Warafa'na laka thikraka","dan kami tinggikan sebutan (nama)mu914) bagimu"],["فَإِنَّ مَعَ ٱلۡعُسۡرِ يُسۡرًا","Fainna ma'a al'usri yusran","Maka sesungguhnya bersama kesulitan ada kemudahan"],["إِنَّ مَعَ ٱلۡعُسۡرِ يُسۡرٗا","Inna ma'a al'usri yusran","sesungguhnya bersama kesulitan ada kemudahan"],["فَإِذَا فَرَغۡتَ فَٱنصَبۡ","Faitha faraghta fainsab","Maka apabila engkau telah selesai (dari suatu urusan), tetaplah bekerja keras (untuk urusan yang lain)"],["وَإِلَىٰ رَبِّكَ فَٱرۡغَب","Waila rabbika fairghab","dan hanya kepada Tuhanmulah engkau berharap"]]},{"n":95,"ar":"التين","tr":"At-Tin","id":"Buah Tin","v":[["وَٱلتِّينِ وَٱلزَّيۡتُونِ","Waaltteeni waalzzaytooni","Demi (buah) Tin dan (buah) Zaitun"],["وَطُورِ سِينِينَ","Watoori seeneena","demi gunung Sinai"],["وَهَٰذَا ٱلۡبَلَدِ ٱلۡأَمِينِ","Wahatha albaladi alameeni","dan demi negeri (Mekkah) yang aman ini"],["لَقَدۡ خَلَقۡنَا ٱلۡإِنسَٰنَ فِيٓ أَحۡسَنِ تَقۡوِيمٖ","Laqad khalaqna alinsana fee ahsani taqweemin","Sungguh, Kami telah menciptakan manusia dalam bentuk yang sebaik-baiknya"],["ثُمَّ رَدَدۡنَٰهُ أَسۡفَلَ سَٰفِلِينَ","Thumma radadnahu asfala safileena","kemudian Kami kembalikan dia ke tempat yang serendah-rendahnya"],["إِلَّا ٱلَّذِينَ ءَامَنُواْ وَعَمِلُواْ ٱلصَّـٰلِحَٰتِ فَلَهُمۡ أَجۡرٌ غَيۡرُ مَمۡنُونٖ","Illa allatheena amanoo wa'amiloo alssalihati falahum ajrun ghayru mamnoonin","kecuali orang-orang yang beriman dan mengerjakan kebajikan; maka mereka akan mendapat pahala yang tidak ada putus-putusnya"],["فَمَا يُكَذِّبُكَ بَعۡدُ بِٱلدِّينِ","Fama yukaththibuka ba'du bialddeeni","Maka apa yang menyebabkan (mereka) mendustakanmu (tentang) hari pembalasan setelah (adanya keterangan-keterangan) itu"],["أَلَيۡسَ ٱللَّهُ بِأَحۡكَمِ ٱلۡحَٰكِمِينَ","Alaysa Allahu biahkami alhakimeena","Bukankah Allah Hakim yang paling adil"]]},{"n":96,"ar":"العلق","tr":"Al-'Alaq","id":"Segumpal Darah","v":[["ٱقۡرَأۡ بِٱسۡمِ رَبِّكَ ٱلَّذِي خَلَقَ","Iqra biismi rabbika allathee khalaqa","Bacalah dengan (menyebut) nama Tuhanmu yang menciptakan"],["خَلَقَ ٱلۡإِنسَٰنَ مِنۡ عَلَقٍ","Khalaqa alinsana min 'alaqin","Dia telah menciptakan manusia dari segumpal darah"],["ٱقۡرَأۡ وَرَبُّكَ ٱلۡأَكۡرَمُ","Iqra warabbuka alakramu","Bacalah, dan Tuhanmulah Yang Mahamulia"],["ٱلَّذِي عَلَّمَ بِٱلۡقَلَمِ","Allathee 'allama bialqalami","Yang mengajar (manusia) dengan pena"],["عَلَّمَ ٱلۡإِنسَٰنَ مَا لَمۡ يَعۡلَمۡ","'allama alinsana ma lam ya'lam","Dia mengajarkan manusia apa yang tidak diketahuinya"],["كَلَّآ إِنَّ ٱلۡإِنسَٰنَ لَيَطۡغَىٰٓ","Kalla inna alinsana layatgha","Sekali-sekali tidak! Sungguh, manusia itu benar-benar melampaui batas"],["أَن رَّءَاهُ ٱسۡتَغۡنَىٰٓ","An raahu istaghna","apabila melihat dirinya serba cukup"],["إِنَّ إِلَىٰ رَبِّكَ ٱلرُّجۡعَىٰٓ","Inna ila rabbika alrruj'a","Sungguh, hanya kepada Tuhanmulah tempat kembali(mu)"],["أَرَءَيۡتَ ٱلَّذِي يَنۡهَىٰ","Araayta allathee yanha","Bagaimana pendapatmu tentang orang yang melarang"],["عَبۡدًا إِذَا صَلَّىٰٓ","'abdan itha salla","seorang hamba ketika dia melaksanakan salat"],["أَرَءَيۡتَ إِن كَانَ عَلَى ٱلۡهُدَىٰٓ","Araayta in kana 'ala alhuda","bagaimana pendapatmu jika dia (yang dilarang salat itu) berada di atas kebenaran (petunjuk)"],["أَوۡ أَمَرَ بِٱلتَّقۡوَىٰٓ","Aw amara bialttaqwa","atau dia menyuruh bertakwa (kepada Allah)"],["أَرَءَيۡتَ إِن كَذَّبَ وَتَوَلَّىٰٓ","Araayta in kaththaba watawalla","Bagaimana pendapatmu jika dia (yang melarang) itu mendustakan dan berpaling"],["أَلَمۡ يَعۡلَم بِأَنَّ ٱللَّهَ يَرَىٰ","Alam ya'lam bianna Allaha yara","Tidakkah dia mengetahui bahwa sesungguhnya Allah melihat (segala perbuatannya)"],["كَلَّا لَئِن لَّمۡ يَنتَهِ لَنَسۡفَعَۢا بِٱلنَّاصِيَةِ","Kalla lain lam yantahi lanasfa'an bialnnasiyati","Sekali-kali tidak! Sungguh, jika dia tidak berhenti (berbuat demikian) niscaya Kami tarik ubun-ubunnya (ke dalam neraka)"],["نَاصِيَةٖ كَٰذِبَةٍ خَاطِئَةٖ","Nasiyatin kathibatin khatiatin","(yaitu) ubun-ubun orang yang mendustakan dan durhaka"],["فَلۡيَدۡعُ نَادِيَهُۥ","Falyad'u nadiyahu","Maka biarlah dia memanggil golongannya (untuk menolongnya)"],["سَنَدۡعُ ٱلزَّبَانِيَةَ","Sanad'u alzzabaniyata","kelak Kami akan memanggil Malaikat Zabaniyah (penyiksa orang-orang yang berdosa)"],["كَلَّا لَا تُطِعۡهُ وَٱسۡجُدۡۤ وَٱقۡتَرِب۩","Kalla la tuti'hu waosjud waiqtarib","sekali-kali tidak! Janganlah kamu patuh kepadanya; dan sujudlah serta dekatkanlah (dirimu kepada Allah)"]]},{"n":97,"ar":"القدر","tr":"Al-Qadr","id":"Kemuliaan","v":[["إِنَّآ أَنزَلۡنَٰهُ فِي لَيۡلَةِ ٱلۡقَدۡرِ","Inna anzalnahu fee laylati alqadri","Sesungguhnya Kami telah menurunkannya (Alquran) pada malam qadar"],["وَمَآ أَدۡرَىٰكَ مَا لَيۡلَةُ ٱلۡقَدۡرِ","Wama adraka ma laylatu alqadri","Dan tahukah kamu apakah malam kemuliaan itu"],["لَيۡلَةُ ٱلۡقَدۡرِ خَيۡرٞ مِّنۡ أَلۡفِ شَهۡرٖ","Laylatu alqadri khayrun min alfi shahrin","Malam kemuliaan itu lebih baik daripada seribu bulan"],["تَنَزَّلُ ٱلۡمَلَـٰٓئِكَةُ وَٱلرُّوحُ فِيهَا بِإِذۡنِ رَبِّهِم مِّن كُلِّ أَمۡرٖ","Tanazzalu almalaikatu waalrroohu feeha biithni rabbihim min kulli amrin","Pada malam itu turun para malaikat dan Ruh (Jibril) dengan izin Tuhannya untuk mengatur semua urusan"],["سَلَٰمٌ هِيَ حَتَّىٰ مَطۡلَعِ ٱلۡفَجۡرِ","Salamun hiya hatta matla'i alfajri","Sejahteralah (malam itu) sampai terbit fajar"]]},{"n":98,"ar":"البينة","tr":"Al-Bayyinah","id":"Pembuktian","v":[["لَمۡ يَكُنِ ٱلَّذِينَ كَفَرُواْ مِنۡ أَهۡلِ ٱلۡكِتَٰبِ وَٱلۡمُشۡرِكِينَ مُنفَكِّينَ حَتَّىٰ تَأۡتِيَهُمُ ٱلۡبَيِّنَةُ","Lam yakuni allatheena kafaroo min ahli alkitabi waalmushrikeena munfakkeena hatta tatiyahumu albayyinatu","Orang-orang yang kafir dari golongan Ahli Kitab dan orang-orang musyrik tidak akan meninggalkan (agama mereka) sampai datang kepada mereka bukti yang nyata"],["رَسُولٞ مِّنَ ٱللَّهِ يَتۡلُواْ صُحُفٗا مُّطَهَّرَةٗ","Rasoolun mina Allahi yatloo suhufan mutahharatan","(yaitu) seorang Rasul dari Allah (Muhammad) yang membacakan lembaran-lembaran yang suci (Alquran)"],["فِيهَا كُتُبٞ قَيِّمَةٞ","Feeha kutubun qayyimatun","di dalamnya terdapat (isi) kitab-kitab yang lurus (benar)"],["وَمَا تَفَرَّقَ ٱلَّذِينَ أُوتُواْ ٱلۡكِتَٰبَ إِلَّا مِنۢ بَعۡدِ مَا جَآءَتۡهُمُ ٱلۡبَيِّنَةُ","Wama tafarraqa allatheena ootoo alkitaba illa min ba'di ma jaathumu albayyinatu","Dan tidaklah terpecah belah orang-orang Ahli Kitab melainkan setelah datang kepada mereka bukti yang nyata"],["وَمَآ أُمِرُوٓاْ إِلَّا لِيَعۡبُدُواْ ٱللَّهَ مُخۡلِصِينَ لَهُ ٱلدِّينَ حُنَفَآءَ وَيُقِيمُواْ ٱلصَّلَوٰةَ وَيُؤۡتُواْ ٱلزَّكَوٰةَۚ وَذَٰلِكَ دِينُ ٱلۡقَيِّمَةِ","Wama omiroo illa liya'budoo Allaha mukhliseena lahu alddeena hunafaa wayuqeemoo alssalata wayutoo alzzakata wathalika deenu alqayyimati","Padahal mereka hanya diperintah menyembah Allah dengan ikhlas menaati-Nya semata-mata karena (menjalankan) agama, dan juga agar melaksanakan salat dan menunaikan zakat; dan yang demikian itulah agama yang lurus (benar)"],["إِنَّ ٱلَّذِينَ كَفَرُواْ مِنۡ أَهۡلِ ٱلۡكِتَٰبِ وَٱلۡمُشۡرِكِينَ فِي نَارِ جَهَنَّمَ خَٰلِدِينَ فِيهَآۚ أُوْلَـٰٓئِكَ هُمۡ شَرُّ ٱلۡبَرِيَّةِ","Inna allatheena kafaroo min ahli alkitabi waalmushrikeena fee nari jahannama khalideena feeha olaika hum sharru albariyyati","Sungguh, orang-orang yang kafir dari golongan Ahli Kitab dan orang-orang musyrik (akan masuk) ke neraka Jahanam; mereka kekal di dalamnya selama-lamanya. Mereka itu adalah sejahat-jahat makhluk"],["إِنَّ ٱلَّذِينَ ءَامَنُواْ وَعَمِلُواْ ٱلصَّـٰلِحَٰتِ أُوْلَـٰٓئِكَ هُمۡ خَيۡرُ ٱلۡبَرِيَّةِ","Inna allatheena amanoo wa'amiloo alssalihati olaika hum khayru albariyyati","Sungguh, orang-orang yang beriman dan mengerjakan kebajikan, mereka itulah sebaik-baik makhluk"],["جَزَآؤُهُمۡ عِندَ رَبِّهِمۡ جَنَّـٰتُ عَدۡنٖ تَجۡرِي مِن تَحۡتِهَا ٱلۡأَنۡهَٰرُ خَٰلِدِينَ فِيهَآ أَبَدٗاۖ رَّضِيَ ٱللَّهُ عَنۡهُمۡ وَرَضُواْ عَنۡهُۚ ذَٰلِكَ لِمَنۡ خَشِيَ رَبَّهُۥ","Jazaohum 'inda rabbihim jannatu 'adnin tajree min tahtiha alanharu khalideena feeha abadan radiya Allahu 'anhum waradoo 'anhu thalika liman khashiya rabbahu","Balasan mereka di sisi Tuhan mereka ialah surga 'Ādn yang mengalir di bawahnya sungai-sungai; mereka kekal di dalamnya selama-lamanya. Allah rida terhadap mereka dan mereka pun rida kepada-Nya. Yang demikian itu adalah (balasan) bagi orang yang takut kepada Tuhannya"]]},{"n":99,"ar":"الزلزلة","tr":"Az-Zalzalah","id":"Kegoncangan","v":[["إِذَا زُلۡزِلَتِ ٱلۡأَرۡضُ زِلۡزَالَهَا","Itha zulzilati alardu zilzalaha","Apabila bumi diguncangkan dengan guncangan yang dahsyat"],["وَأَخۡرَجَتِ ٱلۡأَرۡضُ أَثۡقَالَهَا","Waakhrajati alardu athqalaha","dan bumi telah mengeluarkan beban-beban berat (yang dikandung)nya"],["وَقَالَ ٱلۡإِنسَٰنُ مَا لَهَا","Waqala alinsanu ma laha","dan manusia bertanya, \"Apa yang terjadi pada bumi ini"],["يَوۡمَئِذٖ تُحَدِّثُ أَخۡبَارَهَا","Yawmaithin tuhaddithu akhbaraha","Pada hari itu bumi menyampaikan beritanya"],["بِأَنَّ رَبَّكَ أَوۡحَىٰ لَهَا","Bianna rabbaka awha laha","karena sesungguhnya Tuhanmu telah memerintahkan (yang sedemikian itu) padanya"],["يَوۡمَئِذٖ يَصۡدُرُ ٱلنَّاسُ أَشۡتَاتٗا لِّيُرَوۡاْ أَعۡمَٰلَهُمۡ","Yawmaithin yasduru alnnasu ashtatan liyuraw a'malahum","(Pada hari itu manusia keluar dari kuburnya dalam keadaan berkelompok-kelompok,922) untuk diperlihatkan kepada mereka (balasan) semua amal perbuatannya"],["فَمَن يَعۡمَلۡ مِثۡقَالَ ذَرَّةٍ خَيۡرٗا يَرَهُۥ","Faman ya'mal mithqala tharratin khayran yarahu","Maka barangsiapa mengerjakan kebaikan seberat zarah, niscaya dia akan melihat (balasan)nya"],["وَمَن يَعۡمَلۡ مِثۡقَالَ ذَرَّةٖ شَرّٗا يَرَهُۥ","Waman ya'mal mithqala tharratin sharran yarahu","Dan barangsiapa mengerjakan kejahatan seberat zarah, niscaya dia akan melihat (balasan)nya"]]},{"n":100,"ar":"العاديات","tr":"Al-'Adiyat","id":"Berlari Kencang","v":[["وَٱلۡعَٰدِيَٰتِ ضَبۡحٗا","Waal'adiyati dabhan","Demi kuda perang yang berlari kencang terengah-engah"],["فَٱلۡمُورِيَٰتِ قَدۡحٗا","Faalmooriyati qadhan","dan kuda yang memercikkan bunga api (dengan pukulan kuku kakinya)"],["فَٱلۡمُغِيرَٰتِ صُبۡحٗا","Faalmugheerati subhan","dan kuda yang menyerang (dengan tiba-tiba) pada waktu pagi"],["فَأَثَرۡنَ بِهِۦ نَقۡعٗا","Faatharna bihi naq'an","sehingga menerbangkan debu"],["فَوَسَطۡنَ بِهِۦ جَمۡعًا","Fawasatna bihi jam'an","lalu menyerbu ke tengah-tengah kumpulan musuh"],["إِنَّ ٱلۡإِنسَٰنَ لِرَبِّهِۦ لَكَنُودٞ","Inna alinsana lirabbihi lakanoodun","sungguh, manusia itu sangat ingkar, (tidak bersyukur) kepada Tuhannya"],["وَإِنَّهُۥ عَلَىٰ ذَٰلِكَ لَشَهِيدٞ","Wainnahu 'ala thalika lashaheedun","dan sesungguhnya dia (manusia) menyaksikan (mengakui) keingkarannya"],["وَإِنَّهُۥ لِحُبِّ ٱلۡخَيۡرِ لَشَدِيدٌ","Wainnahu lihubbi alkhayri lashadeedun","dan sesungguhnya cintanya kepada harta benar-benar berlebihan"],["۞أَفَلَا يَعۡلَمُ إِذَا بُعۡثِرَ مَا فِي ٱلۡقُبُورِ","Afala ya'lamu itha bu'thira ma fee alquboori","Maka tidakkah dia mengetahui apabila apa yang di dalam kubur dikeluarkan"],["وَحُصِّلَ مَا فِي ٱلصُّدُورِ","Wahussila ma fee alssudoori","dan apa yang tersimpan di dalam dada dikeluarkan"],["إِنَّ رَبَّهُم بِهِمۡ يَوۡمَئِذٖ لَّخَبِيرُۢ","Inna rabbahum bihim yawmaithin lakhabeerun","sungguh, Tuhan mereka pada hari itu Mahateliti terhadap keadaan mereka"]]},{"n":101,"ar":"القارعة","tr":"Al-Qari'ah","id":"Hari Kiamat","v":[["ٱلۡقَارِعَةُ","Alqari'atu","Hari Kiamat"],["مَا ٱلۡقَارِعَةُ","Ma alqari'atu","Apakah hari Kiamat itu"],["وَمَآ أَدۡرَىٰكَ مَا ٱلۡقَارِعَةُ","Wama adraka ma alqari'atu","Dan tahukah kamu apakah hari Kiamat itu"],["يَوۡمَ يَكُونُ ٱلنَّاسُ كَٱلۡفَرَاشِ ٱلۡمَبۡثُوثِ","Yawma yakoonu alnnasu kaalfarashi almabthoothi","Pada hari itu manusia seperti laron yang beterbangan"],["وَتَكُونُ ٱلۡجِبَالُ كَٱلۡعِهۡنِ ٱلۡمَنفُوشِ","Watakoonu aljibalu kaal'ihni almanfooshi","dan gunung-gunung seperti bulu yang dihambur-hamburkan"],["فَأَمَّا مَن ثَقُلَتۡ مَوَٰزِينُهُۥ","Faamma man thaqulat mawazeenuhu","Maka adapun orang yang berat timbangan (kebaikan)nya"],["فَهُوَ فِي عِيشَةٖ رَّاضِيَةٖ","Fahuwa fee 'eeshatin radiyatin","maka dia berada dalam kehidupan yang memuaskan (senang)"],["وَأَمَّا مَنۡ خَفَّتۡ مَوَٰزِينُهُۥ","Waamma man khaffat mawazeenuhu","Dan adapun orang yang ringan timbangan (kebaikan)nya"],["فَأُمُّهُۥ هَاوِيَةٞ","Faommuhu hawiyatun","maka tempat kembalinya adalah neraka Hāwiyah"],["وَمَآ أَدۡرَىٰكَ مَا هِيَهۡ","Wama adraka ma hiyah","Dan tahukah kamu apakah neraka Hāwiyah itu"],["نَارٌ حَامِيَةُۢ","Narun hamiyatun","(Yaitu) api yang sangat panas"]]},{"n":102,"ar":"التكاثر","tr":"At-Takathur","id":"Bermegah-megahan","v":[["أَلۡهَىٰكُمُ ٱلتَّكَاثُرُ","Alhakumu alttakathuru","Bermegah-megahan telah melalaikan kamu"],["حَتَّىٰ زُرۡتُمُ ٱلۡمَقَابِرَ","Hatta zurtumu almaqabira","sampai kamu masuk ke dalam kubur"],["كَلَّا سَوۡفَ تَعۡلَمُونَ","Kalla sawfa ta'lamoona","Sekali-kali tidak! Kelak kamu akan mengetahui (akibat perbuatanmu itu)"],["ثُمَّ كَلَّا سَوۡفَ تَعۡلَمُونَ","Thumma kalla sawfa ta'lamoona","kemudian sekali-kali tidak! Kelak kamu akan mengetahui"],["كَلَّا لَوۡ تَعۡلَمُونَ عِلۡمَ ٱلۡيَقِينِ","Kalla law ta'lamoona 'ilma alyaqeeni","Sekali-kali tidak! Sekiranya kamu mengetahui dengan pasti"],["لَتَرَوُنَّ ٱلۡجَحِيمَ","Latarawunna aljaheema","niscaya kamu benar-benar akan melihat neraka Jahim"],["ثُمَّ لَتَرَوُنَّهَا عَيۡنَ ٱلۡيَقِينِ","Thumma latarawunnaha 'ayna alyaqeeni","kemudian kamu benar-benar akan melihatnya dengan mata kepala sendiri"],["ثُمَّ لَتُسۡـَٔلُنَّ يَوۡمَئِذٍ عَنِ ٱلنَّعِيمِ","Thumma latusalunna yawmaithin 'ani alnna'eemi","kemudian kamu benar-benar akan ditanya pada hari itu tentang kenikmatan (yang megah di dunia itu)"]]},{"n":103,"ar":"العصر","tr":"Al-'Asr","id":"Waktu Sore","v":[["وَٱلۡعَصۡرِ","Waal'asri","Demi masa"],["إِنَّ ٱلۡإِنسَٰنَ لَفِي خُسۡرٍ","Inna alinsana lafee khusrin","Sungguh, manusia berada dalam kerugian"],["إِلَّا ٱلَّذِينَ ءَامَنُواْ وَعَمِلُواْ ٱلصَّـٰلِحَٰتِ وَتَوَاصَوۡاْ بِٱلۡحَقِّ وَتَوَاصَوۡاْ بِٱلصَّبۡرِ","Illa allatheena amanoo wa'amiloo alssalihati watawasaw bialhaqqi watawasaw bialssabri","kecuali orang-orang yang beriman dan mengerjakan kebajikan serta saling menasihati untuk kebenaran dan saling menasihati untuk kesabaran"]]},{"n":104,"ar":"الهمزة","tr":"Al-Humazah","id":"Pengumpat","v":[["وَيۡلٞ لِّكُلِّ هُمَزَةٖ لُّمَزَةٍ","Waylun likulli humazatin lumazatin","Celakalah bagi setiap pengumpat dan pencela"],["ٱلَّذِي جَمَعَ مَالٗا وَعَدَّدَهُۥ","Allathee jama'a malan wa'addadahu","yang mengumpulkan harta dan menghitung-hitungnya"],["يَحۡسَبُ أَنَّ مَالَهُۥٓ أَخۡلَدَهُۥ","Yahsabu anna malahu akhladahu","dia (manusia) mengira bahwa hartanya itu dapat mengekalkannya"],["كَلَّاۖ لَيُنۢبَذَنَّ فِي ٱلۡحُطَمَةِ","Kalla layunbathanna fee alhutamati","Sekali-kali tidak! Pasti dia akan dilemparkan ke dalam (neraka) Ḥuṭamah"],["وَمَآ أَدۡرَىٰكَ مَا ٱلۡحُطَمَةُ","Wama adraka ma alhutamatu","Dan tahukah kamu apakah (neraka) Ḥuṭamah itu"],["نَارُ ٱللَّهِ ٱلۡمُوقَدَةُ","Naru Allahi almooqadatu","(Yaitu) api (azab) Allah yang dinyalakan"],["ٱلَّتِي تَطَّلِعُ عَلَى ٱلۡأَفۡـِٔدَةِ","Allatee tattali'u 'ala alafidati","yang (membakar) sampai ke hati"],["إِنَّهَا عَلَيۡهِم مُّؤۡصَدَةٞ","lnnaha 'alayhim musadatun","Sungguh, api itu ditutup rapat atas (diri) mereka"],["فِي عَمَدٖ مُّمَدَّدَةِۭ","Fee 'amadin mumaddadatin","(sedang mereka itu) diikat pada tiang-tiang yang panjang"]]},{"n":105,"ar":"الفيل","tr":"Al-Fil","id":"Gajah","v":[["أَلَمۡ تَرَ كَيۡفَ فَعَلَ رَبُّكَ بِأَصۡحَٰبِ ٱلۡفِيلِ","Alam tara kayfa fa'ala rabbuka biashabi alfeeli","Tidakkah engkau (Muhammad) perhatikan bagaimana Tuhanmu telah bertindak terhadap pasukan bergajah"],["أَلَمۡ يَجۡعَلۡ كَيۡدَهُمۡ فِي تَضۡلِيلٖ","Alam yaj'al kaydahum fee tadleelin","Bukankah Dia telah menjadikan tipu daya mereka itu sia-sia"],["وَأَرۡسَلَ عَلَيۡهِمۡ طَيۡرًا أَبَابِيلَ","Waarsala 'alayhim tayran ababeela","dan Dia mengirimkan kepada mereka burung yang berbondong-bondong"],["تَرۡمِيهِم بِحِجَارَةٖ مِّن سِجِّيلٖ","Tarmeehim bihijaratin min sijjeelin","yang melempari mereka dengan batu dari tanah liat yang dibakar"],["فَجَعَلَهُمۡ كَعَصۡفٖ مَّأۡكُولِۭ","Faja'alahum ka'asfin makoolin","sehingga mereka dijadikan-Nya seperti daun-daun yang dimakan (ulat)"]]},{"n":106,"ar":"قريش","tr":"Quraysh","id":"Suku Quraisy","v":[["لِإِيلَٰفِ قُرَيۡشٍ","Lieelafi qurayshin","Karena kebiasaan orang-orang Quraisy"],["إِۦلَٰفِهِمۡ رِحۡلَةَ ٱلشِّتَآءِ وَٱلصَّيۡفِ","Eelafihim rihlata alshshitai waalssayfi","(yaitu) kebiasaan mereka bepergian pada musim dingin dan musim panas"],["فَلۡيَعۡبُدُواْ رَبَّ هَٰذَا ٱلۡبَيۡتِ","Falya'budoo rabba hatha albayti","Maka hendaklah mereka menyembah Tuhan (pemilik) rumah ini (Ka'bah)"],["ٱلَّذِيٓ أَطۡعَمَهُم مِّن جُوعٖ وَءَامَنَهُم مِّنۡ خَوۡفِۭ","Allathee at'amahum min joo'in waamanahum min khawfin","yang telah memberi makanan kepada mereka untuk menghilangkan lapar dan mengamankan mereka dari rasa ketakutan"]]},{"n":107,"ar":"الماعون","tr":"Al-Ma'un","id":"Barang yang Berguna","v":[["أَرَءَيۡتَ ٱلَّذِي يُكَذِّبُ بِٱلدِّينِ","Araayta allathee yukaththibu bialddeeni","Tahukah kamu (orang) yang mendustakan agama"],["فَذَٰلِكَ ٱلَّذِي يَدُعُّ ٱلۡيَتِيمَ","Fathalika allathee yadu''u alyateema","Maka itulah orang yang menghardik anak yatim"],["وَلَا يَحُضُّ عَلَىٰ طَعَامِ ٱلۡمِسۡكِينِ","Wala yahuddu 'ala ta'ami almiskeeni","dan tidak mengajak memberi makan orang miskin"],["فَوَيۡلٞ لِّلۡمُصَلِّينَ","Fawaylun lilmusalleena","Maka celakalah orang yang salat"],["ٱلَّذِينَ هُمۡ عَن صَلَاتِهِمۡ سَاهُونَ","Allatheena hum 'an salatihim sahoona","(yaitu) orang-orang yang lalai terhadap salatnya"],["ٱلَّذِينَ هُمۡ يُرَآءُونَ","Allatheena hum yuraoona","yang berbuat riya"],["وَيَمۡنَعُونَ ٱلۡمَاعُونَ","Wayamna'oona alma'oona","dan enggan (memberikan) bantuan"]]},{"n":108,"ar":"الكوثر","tr":"Al-Kawthar","id":"Nikmat Berlimpah","v":[["إِنَّآ أَعۡطَيۡنَٰكَ ٱلۡكَوۡثَرَ","Inna a'taynaka alkawthara","Sungguh, Kami telah memberimu (Muhammad) nikmat yang banyak"],["فَصَلِّ لِرَبِّكَ وَٱنۡحَرۡ","Fasalli lirabbika wainhar","Maka laksanakanlah salat karena Tuhanmu, dan berkurbanlah (sebagai ibadah dan mendekatkan diri kepada Allah)"],["إِنَّ شَانِئَكَ هُوَ ٱلۡأَبۡتَرُ","Inna shaniaka huwa alabtaru","Sungguh, orang-orang yang membencimu dialah yang terputus (dari rahmat Allah)"]]},{"n":109,"ar":"الكافرون","tr":"Al-Kafirun","id":"Orang-orang Kafir","v":[["قُلۡ يَـٰٓأَيُّهَا ٱلۡكَٰفِرُونَ","Qul ya ayyuha alkafiroona","Katakanlah (Muhammad), \"Wahai orang-orang kafir"],["لَآ أَعۡبُدُ مَا تَعۡبُدُونَ","La a'budu ma ta'budoona","aku tidak akan menyembah apa yang kamu sembah"],["وَلَآ أَنتُمۡ عَٰبِدُونَ مَآ أَعۡبُدُ","Wala antum 'abidoona ma a'budu","dan kamu bukan penyembah apa yang aku sembah"],["وَلَآ أَنَا۠ عَابِدٞ مَّا عَبَدتُّمۡ","Wala ana 'abidun ma 'abadtum","dan aku tidak pernah menjadi penyembah apa yang kamu sembah"],["وَلَآ أَنتُمۡ عَٰبِدُونَ مَآ أَعۡبُدُ","Wala antum 'abidoona ma a'budu","dan kamu tidak pernah (pula) menjadi penyembah apa yang aku sembah"],["لَكُمۡ دِينُكُمۡ وَلِيَ دِينِ","Lakum deenukum waliya deeni","Untukmu agamamu, dan untukku agamaku"]]},{"n":110,"ar":"النصر","tr":"An-Nasr","id":"Pertolongan","v":[["إِذَا جَآءَ نَصۡرُ ٱللَّهِ وَٱلۡفَتۡحُ","Itha jaa nasru Allahi waalfathu","Apabila telah datang pertolongan Allah dan kemenangan"],["وَرَأَيۡتَ ٱلنَّاسَ يَدۡخُلُونَ فِي دِينِ ٱللَّهِ أَفۡوَاجٗا","Waraayta alnnasa yadkhuloona fee deeni Allahi afwajan","dan engkau melihat manusia berbondong-bondong masuk agama Allah"],["فَسَبِّحۡ بِحَمۡدِ رَبِّكَ وَٱسۡتَغۡفِرۡهُۚ إِنَّهُۥ كَانَ تَوَّابَۢا","Fasabbih bihamdi rabbika waistaghfirhu innahu kana tawwaban","maka bertasbihlah dengan memuji Tuhanmu dan mohonlah ampunan kepada-Nya. Sungguh, Dia Maha Penerima tobat"]]},{"n":111,"ar":"المسد","tr":"Al-Masad","id":"Gejolak Api (Sabut)","v":[["تَبَّتۡ يَدَآ أَبِي لَهَبٖ وَتَبَّ","Tabbat yada abee lahabin watabba","Binasalah kedua tangan Abu Lahab dan benar-benar binasa dia"],["مَآ أَغۡنَىٰ عَنۡهُ مَالُهُۥ وَمَا كَسَبَ","Ma aghna 'anhu maluhu wama kasaba","Tidaklah berguna baginya hartanya dan apa yang dia usahakan"],["سَيَصۡلَىٰ نَارٗا ذَاتَ لَهَبٖ","Sayasla naran thata lahabin","Kelak dia akan masuk ke dalam api yang bergejolak (neraka)"],["وَٱمۡرَأَتُهُۥ حَمَّالَةَ ٱلۡحَطَبِ","Waimraatuhu hammalata alhatabi","Dan (begitu pula) istrinya, pembawa kayu bakar (penyebar fitnah)"],["فِي جِيدِهَا حَبۡلٞ مِّن مَّسَدِۭ","Fee jeediha hablun min masadin","Di lehernya ada tali dari sabut yang dipintal"]]},{"n":112,"ar":"الإخلاص","tr":"Al-Ikhlas","id":"Ikhlash","v":[["قُلۡ هُوَ ٱللَّهُ أَحَدٌ","Qul huwa Allahu ahadun","Katakanlah (Muhammad), \"Dialah Allah, Yang Maha Esa"],["ٱللَّهُ ٱلصَّمَدُ","Allahu alssamadu","Allah tempat meminta segala sesuatu"],["لَمۡ يَلِدۡ وَلَمۡ يُولَدۡ","Lam yalid walam yooladu","(Allah) tidak beranak dan tidak pula diperanakkan"],["وَلَمۡ يَكُن لَّهُۥ كُفُوًا أَحَدُۢ","Walam yakun lahu kufuwan ahadun","Dan tidak ada sesuatu yang setara dengan Dia"]]},{"n":113,"ar":"الفلق","tr":"Al-Falaq","id":"Waktu Shubuh","v":[["قُلۡ أَعُوذُ بِرَبِّ ٱلۡفَلَقِ","Qul a'oothu birabbi alfalaqi","Katakanlah, \"Aku berlindung kepada Tuhan yang menguasai subuh (fajar)"],["مِن شَرِّ مَا خَلَقَ","Min sharri ma khalaqa","dari kejahatan (makhluk yang) Dia ciptakan"],["وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ","Wamin sharri ghasiqin itha waqaba","dan dari kejahatan malam apabila telah gelap gulita"],["وَمِن شَرِّ ٱلنَّفَّـٰثَٰتِ فِي ٱلۡعُقَدِ","Wamin sharri alnnaffathati fee al'uqadi","dan dari kejahatan (perempuan-perempuan) penyihir yang meniup pada buhul-buhul (talinya)"],["وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ","Wamin sharri hasidin itha hasada","dan dari kejahatan orang yang dengki apabila dia dengki"]]},{"n":114,"ar":"الناس","tr":"An-Nas","id":"Umat Manusia","v":[["قُلۡ أَعُوذُ بِرَبِّ ٱلنَّاسِ","Qul a'oothu birabbi alnnasi","Katakanlah, \"Aku berlindung kepada Tuhannya manusia"],["مَلِكِ ٱلنَّاسِ","Maliki alnnasi","Raja manusia"],["إِلَٰهِ ٱلنَّاسِ","Ilahi alnnasi","sembahan manusia"],["مِن شَرِّ ٱلۡوَسۡوَاسِ ٱلۡخَنَّاسِ","Min sharri alwaswasi alkhannasi","dari kejahatan (bisikan) setan yang bersembunyi"],["ٱلَّذِي يُوَسۡوِسُ فِي صُدُورِ ٱلنَّاسِ","Allathee yuwaswisu fee sudoori alnnasi","yang membisikkan (kejahatan) ke dalam dada manusia"],["مِنَ ٱلۡجِنَّةِ وَٱلنَّاسِ","Mina aljinnati wa alnnasm","dari (golongan) jin dan manusia"]]}];
+
+/*pure*/
+const INTERVALS=[1,3,7,14,30,60];
+function buildPlan(mode,from,to,n){
+  const out=[],r=[];
+  for(let a=from;a<=to;a++)r.push(a);
+  if(mode==='ayat'){
+    r.forEach((a,i)=>{for(let k=1;k<=n;k++)out.push({a,rep:k,of:n,step:i+1,steps:r.length})});
+  }else if(mode==='rentang'){
+    for(let k=1;k<=n;k++)r.forEach(a=>out.push({a,rep:k,of:n,step:1,steps:1}));
+  }else{
+    for(let st=1;st<=r.length;st++)for(let k=1;k<=n;k++)r.slice(0,st).forEach(a=>out.push({a,rep:k,of:n,step:st,steps:r.length}));
+  }
+  return out;
+}
+function dayStart(ts){const d=new Date(ts);d.setHours(0,0,0,0);return d.getTime()}
+function daysSince(ts,now){return Math.round((dayStart(now)-dayStart(ts))/86400000)}
+function dueIn(m,now){return INTERVALS[Math.min(m.lvl,INTERVALS.length-1)]-daysSince(m.last,now)}
+function dueGroups(mem,now,data){
+  const groups=[];
+  for(const s of data){
+    let cur=null;
+    for(let a=1;a<=s.v.length;a++){
+      const m=mem[s.n+':'+a];
+      if(m&&dueIn(m,now)<=0){
+        const d=daysSince(m.last,now);
+        if(cur&&cur.to===a-1){cur.to=a;cur.old=Math.max(cur.old,d)}
+        else{cur={s:s.n,from:a,to:a,old:d};groups.push(cur)}
+      }else cur=null;
+    }
+  }
+  return groups;
+}
+function nextDue(mem,now){
+  let best=null;
+  for(const k in mem){const d=dueIn(mem[k],now);if(d>0&&(best===null||d<best))best=d}
+  return best;
+}
+/*endpure*/
+
+(function(){
+'use strict';
+const KEY='hafal-juz-amma-v1';
+const TOTAL=DATA.reduce((t,s)=>t+s.v.length,0);
+const QARI=[
+  {id:'Alafasy_128kbps',name:'Mishary Alafasy',note:'jelas, tempo sedang'},
+  {id:'Husary_128kbps',name:'Al-Husary',note:'pelan dan tartil'},
+  {id:'Husary_Muallim_128kbps',name:'Al-Husary Muallim',note:'versi belajar, per ayat'},
+  {id:'Abdul_Basit_Murattal_192kbps',name:'Abdul Basit',note:'murattal'},
+  {id:'Minshawy_Murattal_128kbps',name:'Al-Minshawi',note:'murattal, pelan'},
+  {id:'Abdurrahmaan_As-Sudais_192kbps',name:'As-Sudais',note:'tempo sedang'}
+];
+const MODES=[
+  {id:'ayat',name:'Per ayat',desc:'Satu ayat diulang N kali, lalu pindah ke ayat berikutnya.'},
+  {id:'rentang',name:'Rentang',desc:'Seluruh rentang diputar berurutan, lalu diulang dari awal sebanyak N kali.'},
+  {id:'rantai',name:'Rantai',desc:'Ayat 1 diulang, lalu ayat 1-2, lalu 1-3, dan seterusnya. Ayat lama ikut terulang setiap ada ayat baru. Paling pas untuk 3 sampai 8 ayat.'}
+];
+const RATES=[0.6,0.75,0.9,1,1.15];
+const GAPS=[['0','Tanpa jeda'],['1','1 detik'],['2','2 detik'],['3','3 detik'],['len','Sepanjang ayat, untuk menirukan']];
+const ICON={
+  play:'<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>',
+  pause:'<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor"/></svg>',
+  back:'<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  check:'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+};
+
+/* ---------- penyimpanan (per browser) ---------- */
+function load(){
+  try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);return{mem:o.mem||{},set:o.set||{}}}}catch(e){}
+  return{mem:{},set:{}};
+}
+const saved=load();
+const DEF={qari:QARI[0].id,mode:'ayat',reps:5,rate:1,gap:'2',layers:{ar:true,tl:true,id:true},sort:'short'};
+const S=Object.assign({},DEF,saved.set,{layers:Object.assign({},DEF.layers,(saved.set||{}).layers)});
+if(!QARI.some(q=>q.id===S.qari))S.qari=DEF.qari;
+function save(){try{localStorage.setItem(KEY,JSON.stringify({mem:saved.mem,set:S}))}catch(e){}}
+
+/* ---------- util ---------- */
+const $=(q,r)=>(r||document).querySelector(q);
+const pad=n=>String(n).padStart(3,'0');
+const surah=n=>DATA.find(x=>x.n===n);
+const app=$('#app');
+const mk=(s,a)=>s+':'+a;
+const reduce=()=>window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+function countMem(s){let c=0;for(let a=1;a<=s.v.length;a++)if(saved.mem[mk(s.n,a)])c++;return c}
+function meter(p){const v=Math.round(p*100);return `<span class="meter" role="img" aria-label="${v} persen"><i style="width:${v}%"></i></span>`}
+
+/* ---------- pasang sebagai aplikasi (PWA) ---------- */
+let deferredInstall=null;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;const ib=document.getElementById('install');if(ib)ib.hidden=false});
+addEventListener('appinstalled',()=>{deferredInstall=null;const ib=document.getElementById('install');if(ib)ib.hidden=true});
+
+/* ---------- state tampilan ---------- */
+const V={tab:'surat',s:null};
+const R={from:1,to:1};
+if(dueGroups(saved.mem,Date.now(),DATA).length)V.tab='today';
+
+/* ---------- render ---------- */
+function render(){
+  closeTry();
+  app.innerHTML=V.s===null?homeHTML():surahHTML(V.s);
+  if(deferredInstall){const ib=$('#install');if(ib)ib.hidden=false}
+  if(V.s!==null){syncPanel();syncMem()}
+  paint();
+}
+function homeHTML(){
+  const due=dueGroups(saved.mem,Date.now(),DATA).reduce((t,g)=>t+g.to-g.from+1,0);
+  const tabs=[['today','Hari ini'],['surat','Surat']].map(([id,t])=>
+    `<button type="button" role="tab" aria-selected="${V.tab===id}" data-act="tab" data-v="${id}">${t}${id==='today'&&due?` <span class="badge">${due}</span>`:''}</button>`).join('');
+  return `<header><h1>Hafal Juz Amma</h1><p class="sub">Juz 30, ${DATA.length} surat, ${TOTAL} ayat. Putar murottal berulang sampai lekat, lalu ulang lagi sesuai jadwal.</p><button type="button" class="btn quiet small" id="install" data-act="install" hidden style="margin-top:12px">Pasang di layar utama</button></header>
+  <div class="tabs" role="tablist">${tabs}</div>${V.tab==='today'?todayHTML():suratHTML()}`;
+}
+function todayHTML(){
+  const now=Date.now(),mem=saved.mem,total=Object.keys(mem).length;
+  const groups=dueGroups(mem,now,DATA);
+  let h=`<section class="sum"><div class="big"><span class="bignum">${total}</span><span class="bigtxt">dari ${TOTAL} ayat sudah hafal</span></div>${meter(total/TOTAL)}</section>`;
+  if(!total){
+    h+=`<div class="empty"><h2>Belum ada ayat yang ditandai hafal</h2><p>Buka tab Surat, pilih satu surat pendek seperti An-Nas, putar berulang, lalu tekan Hafal pada ayat yang sudah lekat. Jadwal muraja'ah muncul di sini mulai besok.</p><button type="button" class="btn primary" data-act="tab" data-v="surat">Pilih surat</button></div>`;
+  }else if(!groups.length){
+    const nd=nextDue(mem,now);
+    h+=`<div class="empty"><h2>Tidak ada yang perlu diulang hari ini</h2>${nd?`<p>Muraja'ah berikutnya ${nd===1?'besok':`dalam ${nd} hari`}.</p>`:''}</div>`;
+  }else{
+    h+=`<h2 class="sec">Perlu diulang hari ini</h2><ul class="grps">`+groups.map(g=>{
+      const s=surah(g.s),n=g.to-g.from+1,rg=g.to>g.from?`${g.from}-${g.to}`:`${g.from}`;
+      const ago=g.old<=0?'hari ini':g.old===1?'kemarin':`${g.old} hari lalu`;
+      return `<li class="grp"><div><strong>${s.tr}</strong> ayat ${rg}<span class="gmeta">${n} ayat, terakhir diulang ${ago}</span></div>
+      <div class="gbtns"><button type="button" class="btn primary small" data-act="gplay" data-s="${g.s}" data-from="${g.from}" data-to="${g.to}">Putar</button>
+      <button type="button" class="btn quiet small" data-act="gdone" data-s="${g.s}" data-from="${g.from}" data-to="${g.to}">Sudah diulang</button>
+      <button type="button" class="btn quiet small" data-act="gdoubt" data-s="${g.s}" data-from="${g.from}" data-to="${g.to}">Masih ragu</button></div></li>`;
+    }).join('')+`</ul>`;
+  }
+  h+=`<p class="note">Jadwal ulang: ${INTERVALS.slice(0,-1).join(', ')}, lalu ${INTERVALS[INTERVALS.length-1]} hari setelah muraja'ah terakhir. Menekan Masih ragu mengembalikan ayat ke jadwal besok.</p>
+  <details class="backup"><summary>Pindahkan progres ke perangkat lain</summary>
+  <p>Progres tersimpan di browser ini saja. Buat kode cadangan, salin, lalu tempel di perangkat lain dan tekan Pulihkan. Data bisa hilang kalau data browser dibersihkan.</p>
+  <textarea id="bk" spellcheck="false" aria-label="Kode cadangan"></textarea>
+  <div class="rowbtns"><button type="button" class="btn quiet small" data-act="bkMake">Buat kode cadangan</button><button type="button" class="btn quiet small" data-act="bkLoad">Pulihkan dari kode</button></div>
+  <p id="bkMsg" role="status"></p></details>`;
+  return h;
+}
+function suratHTML(){
+  const list=DATA.slice();
+  if(S.sort==='short')list.sort((a,b)=>a.v.length-b.v.length||b.n-a.n);
+  const sortbar=`<div class="sortbar"><span>Urutan</span>
+    <button type="button" class="chip" aria-pressed="${S.sort==='short'}" data-act="sort" data-v="short">Pendek dulu</button>
+    <button type="button" class="chip" aria-pressed="${S.sort==='mushaf'}" data-act="sort" data-v="mushaf">Urutan mushaf</button></div>`;
+  return sortbar+`<ul class="slist">`+list.map(s=>{
+    const c=countMem(s);
+    return `<li><button type="button" class="srow" data-act="open" data-s="${s.n}" aria-label="${s.tr}, ${s.v.length} ayat, ${c} hafal">
+      <span class="sn">${s.n}</span><span class="sm"><span class="sname">${s.tr}</span><span class="smeta">${s.id}, ${s.v.length} ayat</span></span>
+      <span class="sar" lang="ar">${s.ar}</span>
+      <span class="sprog">${meter(c/s.v.length)}<span>${c}/${s.v.length}</span></span></button></li>`;
+  }).join('')+`</ul>`;
+}
+function surahHTML(n){
+  const s=surah(n),len=s.v.length;
+  const opts=sel=>Array.from({length:len},(_,i)=>`<option value="${i+1}"${i+1===sel?' selected':''}>Ayat ${i+1}</option>`).join('');
+  const layers=[['ar','Arab'],['tl','Latin'],['id','Terjemahan']].map(([k,t])=>`<button type="button" class="chip" aria-pressed="${S.layers[k]}" data-act="layer" data-v="${k}">${t}</button>`).join('');
+  return `<button type="button" class="back" data-act="back">${ICON.back} Semua surat</button>
+  <div class="shead"><div><h1>${s.tr}</h1><p class="sub">${s.id}, ${len} ayat</p></div><span class="sar2" lang="ar">${s.ar}</span></div>
+  <section class="panel" aria-label="Pengaturan latihan">
+    <div class="pair">
+      <div class="field"><label for="selFrom">Dari</label><select id="selFrom" data-bind="from">${opts(R.from)}</select></div>
+      <div class="field"><label for="selTo">Sampai</label><select id="selTo" data-bind="to">${opts(R.to)}</select></div>
+    </div>
+    <div class="field"><span class="lab">Pola pengulangan</span>
+      <div class="chips" id="modes">${MODES.map(m=>`<button type="button" class="chip" data-act="mode" data-v="${m.id}">${m.name}</button>`).join('')}</div>
+      <p class="desc" id="modeDesc"></p></div>
+    <div class="field"><span class="lab">Jumlah ulangan</span>
+      <div class="stepper"><button type="button" class="sq" data-act="repDec" aria-label="Kurangi ulangan">-</button><output id="repVal" aria-live="polite"></output><button type="button" class="sq" data-act="repInc" aria-label="Tambah ulangan">+</button>
+      ${[3,5,10,20].map(v=>`<button type="button" class="chip" data-act="repSet" data-v="${v}">${v}x</button>`).join('')}</div></div>
+    <div class="field"><span class="lab">Kecepatan</span><div class="chips" id="rates">${RATES.map(r=>`<button type="button" class="chip" data-act="rate" data-v="${r}">${r}x</button>`).join('')}</div></div>
+    <div class="pair">
+      <div class="field"><label for="selGap">Jeda antar pemutaran</label><select id="selGap" data-bind="gap">${GAPS.map(([v,t])=>`<option value="${v}"${v===S.gap?' selected':''}>${t}</option>`).join('')}</select></div>
+      <div class="field"><label for="selQari">Qari</label><select id="selQari" data-bind="qari">${QARI.map(q=>`<option value="${q.id}"${q.id===S.qari?' selected':''}>${q.name} (${q.note})</option>`).join('')}</select></div>
+    </div>
+    <p class="plan" id="planInfo"></p>
+    <div class="go"><button type="button" class="btn primary" id="goBtn" data-act="go"></button>
+    <button type="button" class="btn quiet" data-act="markRange">Tandai rentang ini hafal</button></div>
+  </section>
+  <div class="layers"><span class="lab">Tampilkan</span>${layers}</div>
+  <div class="prog"><span class="txt2" id="sProg"></span><span id="sMeter"></span></div>
+  <ol class="rows" id="rows">${s.v.map((v,i)=>{const a=i+1;return `<li class="row" id="r${a}" data-a="${a}">
+    <div class="rowhead"><span class="num">${a}</span><div class="acts">
+      <button type="button" class="chip" data-act="playfrom" data-a="${a}">Putar dari sini</button>
+      <button type="button" class="chip" data-act="try" data-a="${a}" aria-pressed="false">Tirukan</button>
+      <button type="button" class="chip mem" data-act="mem" data-a="${a}" aria-pressed="false">Hafal</button></div></div>
+    <div class="txt" data-act="peek" tabindex="0"><p class="ar" lang="ar" dir="rtl">${v[0]}</p><p class="tl">${v[1]}</p><p class="idn">${v[2]}</p></div></li>`}).join('')}</ol>`;
+}
+
+/* ---------- sinkron panel dan status hafal ---------- */
+function syncRowsClass(){
+  const r=$('#rows');if(!r)return;
+  r.className='rows'+(S.layers.ar?'':' hide-ar')+(S.layers.tl?'':' hide-tl')+(S.layers.id?'':' hide-id');
+}
+function syncPanel(){
+  syncRowsClass();
+  document.querySelectorAll('[data-act="mode"]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===S.mode)));
+  document.querySelectorAll('[data-act="rate"]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.v)===S.rate)));
+  document.querySelectorAll('[data-act="repSet"]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.v)===S.reps)));
+  $('#modeDesc').textContent=MODES.find(m=>m.id===S.mode).desc;
+  $('#repVal').textContent=S.reps;
+  const len=buildPlan(S.mode,R.from,R.to,S.reps).length;
+  const pi=$('#planInfo');
+  pi.textContent=`Rencana: ${len} pemutaran ayat.`+(len>300?' Cukup panjang, kurangi ulangan atau persempit rentang.':'');
+  pi.className='plan'+(len>300?' long':'');
+  syncGo();
+}
+function syncMem(){
+  const s=surah(V.s);if(!s)return;
+  document.querySelectorAll('.row').forEach(r=>{
+    const on=!!saved.mem[mk(s.n,+r.dataset.a)];
+    r.classList.toggle('hafal',on);
+    const b=r.querySelector('.mem');b.setAttribute('aria-pressed',String(on));
+    b.innerHTML=on?ICON.check+' Hafal':'Hafal';
+  });
+  const c=countMem(s);
+  $('#sProg').textContent=`${c} dari ${s.v.length} ayat hafal`;
+  $('#sMeter').innerHTML=meter(c/s.v.length);
+}
+function syncGo(){
+  const b=$('#goBtn');if(!b)return;
+  const mine=P.s===V.s;
+  if(mine&&(P.state==='playing'||P.state==='gap'))b.innerHTML=ICON.pause+' Jeda';
+  else if(mine&&P.state==='paused')b.innerHTML=ICON.play+' Lanjutkan';
+  else b.innerHTML=ICON.play+' Mulai putar';
+}
+
+/* ---------- pemutar ---------- */
+const audio=new Audio();audio.preload='auto';
+const pre=new Audio();pre.preload='auto';
+const P={plan:[],i:0,state:'idle',s:null,from:1,to:1,mode:'ayat',timer:0,err:'',shown:0,resume:''};
+const url=(q,s,a)=>`https://everyayah.com/data/${q}/${pad(s)}${pad(a)}.mp3`;
+function statusText(it){
+  const s=surah(P.s);let t=`${s.tr} ayat ${it.a}`,d='';
+  if(P.mode==='ayat')d=`ulangan ${it.rep} dari ${it.of}`;
+  else if(P.mode==='rentang')d=`putaran ${it.rep} dari ${it.of}`;
+  else d=`tahap ${it.step} dari ${it.steps}, putaran ${it.rep} dari ${it.of}`;
+  return [t,d];
+}
+function gapMs(){
+  if(S.gap==='len')return isFinite(audio.duration)?audio.duration/S.rate*1000:2000;
+  return Number(S.gap)*1000;
+}
+function startPlay(){
+  closeTry();P.mode=S.mode;P.s=V.s;P.from=R.from;P.to=R.to;P.plan=buildPlan(S.mode,R.from,R.to,S.reps);P.err='';P.shown=0;
+  if(!P.plan.length)return;
+  playAt(0);
+}
+function playAt(i){
+  clearTimeout(P.timer);
+  if(i<0)i=0;
+  if(i>=P.plan.length){finish();return}
+  P.i=i;P.state='playing';P.err='';
+  const it=P.plan[i];
+  audio.src=url(S.qari,P.s,it.a);
+  audio.defaultPlaybackRate=S.rate;audio.playbackRate=S.rate;
+  try{audio.preservesPitch=true}catch(e){}
+  const pr=audio.play();if(pr&&pr.catch)pr.catch(onAudioError);
+  const nx=P.plan[i+1];if(nx&&nx.a!==it.a)pre.src=url(S.qari,P.s,nx.a);
+  paint();
+}
+function onAudioError(){
+  if(P.state==='idle'||P.err)return;
+  clearTimeout(P.timer);
+  P.state='idle';
+  P.err='Audio tidak bisa dimuat. Periksa koneksi internet. Jika halaman ini dibuka lewat artifact dan audio tetap gagal, pakai versi file HTML-nya langsung di browser.';
+  paint();
+}
+audio.addEventListener('error',onAudioError);
+audio.addEventListener('ended',()=>{
+  if(P.state!=='playing')return;
+  const next=P.i+1;
+  if(next>=P.plan.length){finish();return}
+  const g=gapMs();
+  if(g>0){P.state='gap';P.timer=setTimeout(()=>playAt(next),g)}else playAt(next);
+});
+function pause(){
+  if(P.state==='playing'){audio.pause();P.state='paused';P.resume='audio'}
+  else if(P.state==='gap'){clearTimeout(P.timer);P.state='paused';P.resume='next'}
+  paint();
+}
+function resume(){
+  if(P.state!=='paused')return;
+  if(P.resume==='next')playAt(P.i+1);
+  else{P.state='playing';const pr=audio.play();if(pr&&pr.catch)pr.catch(onAudioError);paint()}
+}
+function stop(){
+  clearTimeout(P.timer);P.state='idle';P.err='';
+  audio.pause();audio.removeAttribute('src');
+  P.plan=[];paint();
+}
+function finish(){
+  clearTimeout(P.timer);P.state='idle';audio.pause();P.plan=[];paint();
+}
+function paint(){
+  const bar=$('#bar'),active=P.state!=='idle'&&P.plan.length>0;
+  bar.hidden=!(active||P.err);
+  if(active){
+    const it=P.plan[P.i],[a,b]=statusText(it);
+    $('#barText').innerHTML=`${a}<small>${b}${P.state==='gap'?', jeda':''}</small>`;
+    const playing=P.state==='playing'||P.state==='gap';
+    const t=$('#barToggle');t.innerHTML=playing?ICON.pause:ICON.play;t.setAttribute('aria-label',playing?'Jeda':'Lanjutkan');
+  }else $('#barText').textContent='';
+  $('#barErr').textContent=P.err||'';
+  document.querySelectorAll('.row.now').forEach(r=>r.classList.remove('now'));
+  if(active&&V.s===P.s){
+    const a=P.plan[P.i].a,r=$('#r'+a);
+    if(r){r.classList.add('now');if(P.shown!==a){P.shown=a;r.scrollIntoView({block:'center',behavior:reduce()?'auto':'smooth'})}}
+  }
+  syncGo();
+}
+
+/* ---------- tirukan dan bandingkan ---------- */
+const T={a:0,state:'idle',rec:null,stream:null,chunks:[],url:'',timer:0,t0:0};
+const exA=new Audio(),mineA=new Audio();
+let seqTimer=0;
+function tryMsg(m,bad){const e=$('#tryMsg');if(e){e.textContent=m||'';e.style.color=bad?'var(--bad)':''}}
+function tryStopAudio(){clearTimeout(seqTimer);exA.pause();mineA.pause()}
+function closeTry(){
+  tryStopAudio();
+  if(T.rec&&T.rec.state!=='inactive'){try{T.rec.onstop=null;T.rec.stop()}catch(e){}}
+  if(T.stream){T.stream.getTracks().forEach(x=>x.stop());T.stream=null}
+  clearInterval(T.timer);
+  if(T.url){URL.revokeObjectURL(T.url);T.url=''}
+  const p=$('#try');if(p)p.remove();
+  document.querySelectorAll('[data-act="try"][aria-pressed="true"]').forEach(b=>b.setAttribute('aria-pressed','false'));
+  T.a=0;T.state='idle';T.rec=null;T.chunks=[];
+}
+function tryHTML(){
+  return `<div class="try" id="try">
+    <p class="desc">Dengarkan contoh, rekam bacaanmu, lalu bandingkan. Untuk menguji hafalan, sembunyikan teks dulu.</p>
+    <div class="rowbtns"><button type="button" class="btn quiet small" data-act="tryEx">Dengarkan contoh</button>
+      <button type="button" class="btn quiet small" data-act="tryBlind">Uji tanpa teks</button></div>
+    <div class="rowbtns"><button type="button" class="btn primary small" id="tryRecBtn" data-act="tryRec"></button></div>
+    <div class="rowbtns" id="tryAfter" hidden><button type="button" class="btn quiet small" data-act="tryMine">Putar rekamanmu</button>
+      <button type="button" class="btn primary small" data-act="tryBoth">Bandingkan</button></div>
+    <p class="msg" id="tryMsg" role="status"></p></div>`;
+}
+function syncTry(){
+  const b=$('#tryRecBtn');if(!b)return;
+  const rec=T.state==='recording';
+  b.classList.toggle('recording',rec);b.classList.toggle('primary',!rec);
+  if(rec){const s=Math.floor((Date.now()-T.t0)/1000);b.innerHTML=`<span class="dot"></span> Berhenti ${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`}
+  else if(T.state==='stopping')b.textContent='Menyimpan';
+  else b.innerHTML=`<span class="dot"></span> ${T.state==='ready'?'Rekam ulang':'Rekam'}`;
+  $('#tryAfter').hidden=T.state!=='ready';
+}
+function openTry(b,a){
+  closeTry();stop();T.a=a;
+  b.setAttribute('aria-pressed','true');
+  $('#r'+a).insertAdjacentHTML('beforeend',tryHTML());
+  syncTry();
+}
+function playEx(rate,then){
+  tryStopAudio();
+  exA.src=url(S.qari,V.s,T.a);exA.defaultPlaybackRate=rate;exA.playbackRate=rate;
+  exA.onended=then||null;
+  exA.onerror=()=>tryMsg('Audio contoh tidak bisa dimuat. Periksa koneksi internet.',true);
+  const p=exA.play();if(p&&p.catch)p.catch(()=>tryMsg('Audio contoh tidak bisa diputar.',true));
+}
+function playMine(){
+  mineA.currentTime=0;mineA.onended=null;
+  const p=mineA.play();if(p&&p.catch)p.catch(()=>tryMsg('Rekaman tidak bisa diputar di sini.',true));
+}
+async function startRec(){
+  tryStopAudio();
+  if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)||typeof MediaRecorder==='undefined'){
+    tryMsg('Perekaman tidak tersedia di browser atau halaman ini. Coba buka versi file HTML di Chrome.',true);return;
+  }
+  try{T.stream=await navigator.mediaDevices.getUserMedia({audio:true})}
+  catch(e){
+    tryMsg(e&&e.name==='NotFoundError'?'Mikrofon tidak ditemukan di perangkat ini.':'Akses mikrofon ditolak. Izinkan mikrofon untuk halaman ini, atau buka versi file HTML di Chrome.',true);return;
+  }
+  if(!$('#try')){T.stream.getTracks().forEach(x=>x.stop());T.stream=null;return}
+  if(T.url){URL.revokeObjectURL(T.url);T.url=''}
+  T.chunks=[];
+  const rec=new MediaRecorder(T.stream);T.rec=rec;
+  rec.ondataavailable=e=>{if(e.data&&e.data.size)T.chunks.push(e.data)};
+  rec.onstop=()=>{
+    clearInterval(T.timer);
+    if(T.stream){T.stream.getTracks().forEach(x=>x.stop());T.stream=null}
+    if(!T.chunks.length){T.state='idle';syncTry();tryMsg('Rekaman kosong. Coba lagi.',true);return}
+    T.url=URL.createObjectURL(new Blob(T.chunks,{type:rec.mimeType||'audio/webm'}));
+    mineA.src=T.url;T.state='ready';syncTry();tryMsg('Rekaman siap. Tekan Bandingkan.');
+  };
+  rec.start();T.state='recording';T.t0=Date.now();
+  T.timer=setInterval(()=>{syncTry();if(Date.now()-T.t0>=60000)stopRec()},500);
+  syncTry();tryMsg('');
+}
+function stopRec(){if(T.rec&&T.state==='recording'){T.state='stopping';syncTry();T.rec.stop()}}
+
+/* ---------- aksi ---------- */
+function clampReps(v){return Math.max(1,Math.min(50,v))}
+function setMem(s,a,on){
+  const k=mk(s,a),now=Date.now();
+  if(on){if(!saved.mem[k])saved.mem[k]={at:now,last:now,lvl:0}}else delete saved.mem[k];
+}
+function openSurah(n,from,to){
+  V.s=n;R.from=from||1;R.to=to||surah(n).v.length;
+  render();window.scrollTo(0,0);
+}
+function groupEach(b,fn){
+  const s=+b.dataset.s,f=+b.dataset.from,t=+b.dataset.to;
+  for(let a=f;a<=t;a++){const m=saved.mem[mk(s,a)];if(m)fn(m)}
+}
+const ACT={
+  install(){if(deferredInstall){const d=deferredInstall;deferredInstall=null;const ib=$('#install');if(ib)ib.hidden=true;d.prompt()}},
+  tab(b){V.tab=b.dataset.v;render()},
+  sort(b){S.sort=b.dataset.v;save();render()},
+  open(b){openSurah(+b.dataset.s)},
+  back(){V.s=null;render();window.scrollTo(0,0)},
+  openPlaying(){if(P.s!==null&&V.s!==P.s)openSurah(P.s,P.from,P.to)},
+  mode(b){S.mode=b.dataset.v;save();syncPanel()},
+  repDec(){S.reps=clampReps(S.reps-1);save();syncPanel()},
+  repInc(){S.reps=clampReps(S.reps+1);save();syncPanel()},
+  repSet(b){S.reps=clampReps(+b.dataset.v);save();syncPanel()},
+  rate(b){S.rate=Number(b.dataset.v);save();audio.playbackRate=S.rate;audio.defaultPlaybackRate=S.rate;syncPanel()},
+  layer(b){const k=b.dataset.v;S.layers[k]=!S.layers[k];b.setAttribute('aria-pressed',String(S.layers[k]));save();syncRowsClass()},
+  go(){
+    if(P.s===V.s&&(P.state==='playing'||P.state==='gap'))pause();
+    else if(P.s===V.s&&P.state==='paused')resume();
+    else startPlay();
+  },
+  markRange(){for(let a=R.from;a<=R.to;a++)setMem(V.s,a,true);save();syncMem()},
+  playfrom(b){
+    const a=+b.dataset.a;R.from=a;if(R.to<a)R.to=a;
+    $('#selFrom').value=R.from;$('#selTo').value=R.to;syncPanel();startPlay();
+  },
+  mem(b){const a=+b.dataset.a,k=mk(V.s,a);setMem(V.s,a,!saved.mem[k]);save();syncMem()},
+  peek(b){const r=b.closest('.row');if(r)r.classList.toggle('peek')},
+  gplay(b){openSurah(+b.dataset.s,+b.dataset.from,+b.dataset.to);startPlay()},
+  gdone(b){const now=Date.now();groupEach(b,m=>{m.lvl=Math.min(m.lvl+1,INTERVALS.length-1);m.last=now});save();render()},
+  gdoubt(b){const now=Date.now();groupEach(b,m=>{m.lvl=0;m.last=now});save();render()},
+  bkMake(){
+    const t=$('#bk');t.value=JSON.stringify({v:1,mem:saved.mem});t.focus();t.select();
+    let msg='Kode dibuat. Salin teks di atas.';
+    try{navigator.clipboard.writeText(t.value).then(()=>{$('#bkMsg').textContent='Kode dibuat dan disalin.'}).catch(()=>{})}catch(e){}
+    $('#bkMsg').textContent=msg;
+  },
+  bkLoad(){
+    const out=$('#bkMsg');
+    try{
+      const o=JSON.parse($('#bk').value),m=o&&o.mem;let n=0;
+      if(!m||typeof m!=='object')throw new Error('x');
+      for(const k in m){
+        const v=m[k];
+        if(!/^\d+:\d+$/.test(k)||!v||!isFinite(v.at)||!isFinite(v.last)||!isFinite(v.lvl))continue;
+        const cur=saved.mem[k];
+        if(!cur||v.last>cur.last){saved.mem[k]={at:+v.at,last:+v.last,lvl:Math.max(0,Math.min(INTERVALS.length-1,Math.round(v.lvl)))};n++}
+      }
+      save();out.textContent=`Berhasil memulihkan ${n} ayat.`;
+    }catch(e){out.textContent='Kode tidak valid. Pastikan seluruh teks tersalin.'}
+  },
+  try(b){const a=+b.dataset.a;if(T.a===a)closeTry();else openTry(b,a)},
+  tryEx(){tryMsg('');playEx(S.rate)},
+  tryRec(){if(T.state==='recording')stopRec();else startRec()},
+  tryMine(){tryStopAudio();tryMsg('');playMine()},
+  tryBoth(){tryMsg('Contoh dulu, lalu rekamanmu.');playEx(1,()=>{seqTimer=setTimeout(playMine,500)})},
+  tryBlind(){
+    S.layers={ar:false,tl:false,id:false};save();syncRowsClass();
+    document.querySelectorAll('[data-act="layer"]').forEach(x=>x.setAttribute('aria-pressed','false'));
+    document.querySelectorAll('.row.peek').forEach(r=>r.classList.remove('peek'));
+    tryMsg('Teks disembunyikan. Tekan Tampilkan di atas untuk memunculkannya lagi.');
+  },
+  pPrev(){if(P.state!=='idle')playAt(P.i-1)},
+  pNext(){if(P.state!=='idle')playAt(P.i+1)},
+  pToggle(){if(P.state==='paused')resume();else if(P.state==='playing'||P.state==='gap')pause()},
+  pStop(){stop()}
+};
+const BIND={
+  from(t){R.from=+t.value;if(R.to<R.from){R.to=R.from;$('#selTo').value=R.to}syncPanel()},
+  to(t){R.to=+t.value;if(R.from>R.to){R.from=R.to;$('#selFrom').value=R.from}syncPanel()},
+  gap(t){S.gap=t.value;save()},
+  qari(t){S.qari=t.value;save()}
+};
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');
+  if(!b)return;
+  const f=ACT[b.dataset.act];if(f)f(b,e);
+});
+document.addEventListener('keydown',e=>{
+  if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('.txt')){e.preventDefault();ACT.peek(e.target)}
+});
+document.addEventListener('change',e=>{
+  const t=e.target;if(t.dataset&&t.dataset.bind&&BIND[t.dataset.bind])BIND[t.dataset.bind](t);
+});
+render();
+})();
+</script>
+<script>
+if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){
+  window.addEventListener('load',function(){try{navigator.serviceWorker.register('./sw.js')}catch(e){}});
+}
+</script>
+</body>
+</html>
