@@ -152,6 +152,13 @@ select{font:inherit;color:var(--ink);background:var(--surface-2);border:1px soli
 .rows.hide-ar.hide-tl.hide-id .row:not(.peek) .txt::before{content:"Teks disembunyikan. Ketuk untuk melihat.";color:var(--muted);font-size:.92rem;display:block;padding:10px 0}
 .rows[class*="hide-"] .txt{cursor:pointer}
 
+/* Offline */
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.danger{background:var(--surface-2);border-color:var(--bad);color:var(--bad)}
+.dlmeta{display:block;color:var(--muted);font-size:.9rem;margin-top:2px;font-variant-numeric:tabular-nums}
+.dlmsg{margin-top:14px;min-height:1.4em}
+.dlstore{color:var(--muted);font-size:.92rem;margin-top:6px}
+
 /* Transport bar */
 .bar{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);z-index:5;
   padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
@@ -231,12 +238,12 @@ function nextDue(mem,now){
 const KEY='hafal-juz-amma-v1';
 const TOTAL=DATA.reduce((t,s)=>t+s.v.length,0);
 const QARI=[
-  {id:'Alafasy_128kbps',name:'Mishary Alafasy',note:'jelas, tempo sedang'},
-  {id:'Husary_128kbps',name:'Al-Husary',note:'pelan dan tartil'},
-  {id:'Husary_Muallim_128kbps',name:'Al-Husary Muallim',note:'versi belajar, per ayat'},
-  {id:'Abdul_Basit_Murattal_192kbps',name:'Abdul Basit',note:'murattal'},
-  {id:'Minshawy_Murattal_128kbps',name:'Al-Minshawi',note:'murattal, pelan'},
-  {id:'Abdurrahmaan_As-Sudais_192kbps',name:'As-Sudais',note:'tempo sedang'}
+  {id:'Alafasy_128kbps',name:'Mishary Alafasy',note:'jelas, tempo sedang',mb:54},
+  {id:'Husary_128kbps',name:'Al-Husary',note:'pelan dan tartil',mb:81},
+  {id:'Husary_Muallim_128kbps',name:'Al-Husary Muallim',note:'versi belajar, per ayat',mb:89},
+  {id:'Abdul_Basit_Murattal_192kbps',name:'Abdul Basit',note:'murattal',mb:78},
+  {id:'Minshawy_Murattal_128kbps',name:'Al-Minshawi',note:'murattal, pelan',mb:60},
+  {id:'Abdurrahmaan_As-Sudais_192kbps',name:'As-Sudais',note:'tempo sedang',mb:59}
 ];
 const MODES=[
   {id:'ayat',name:'Per ayat',desc:'Satu ayat diulang N kali, lalu pindah ke ayat berikutnya.'},
@@ -293,10 +300,10 @@ function render(){
 }
 function homeHTML(){
   const due=dueGroups(saved.mem,Date.now(),DATA).reduce((t,g)=>t+g.to-g.from+1,0);
-  const tabs=[['today','Hari ini'],['surat','Surat']].map(([id,t])=>
+  const tabs=[['today','Hari ini'],['surat','Surat'],['dl','Offline']].map(([id,t])=>
     `<button type="button" role="tab" aria-selected="${V.tab===id}" data-act="tab" data-v="${id}">${t}${id==='today'&&due?` <span class="badge">${due}</span>`:''}</button>`).join('');
   return `<header><h1>Hafal Juz Amma</h1><p class="sub">Juz 30, ${DATA.length} surat, ${TOTAL} ayat. Putar murottal berulang sampai lekat, lalu ulang lagi sesuai jadwal.</p><button type="button" class="btn quiet small" id="install" data-act="install" hidden style="margin-top:12px">Pasang di layar utama</button></header>
-  <div class="tabs" role="tablist">${tabs}</div>${V.tab==='today'?todayHTML():suratHTML()}`;
+  <div class="tabs" role="tablist">${tabs}</div>${V.tab==='today'?todayHTML():V.tab==='dl'?`<div id="dlBox">${dlHTML()}</div>`:suratHTML()}`;
 }
 function todayHTML(){
   const now=Date.now(),mem=saved.mem,total=Object.keys(mem).length;
@@ -389,7 +396,7 @@ function syncPanel(){
   $('#repVal').textContent=S.reps;
   const len=buildPlan(S.mode,R.from,R.to,S.reps).length;
   const pi=$('#planInfo');
-  pi.textContent=`Rencana: ${len} pemutaran ayat.`+(len>300?' Cukup panjang, kurangi ulangan atau persempit rentang.':'');
+  pi.textContent=`Rencana: ${len} pemutaran ayat.`+(len>300?' Cukup panjang, kurangi ulangan atau persempit rentang.':'')+(offCount(S.qari)>=TOTAL?' Audio qari ini tersimpan, bisa diputar tanpa internet.':'');
   pi.className='plan'+(len>300?' long':'');
   syncGo();
 }
@@ -416,8 +423,140 @@ function syncGo(){
 /* ---------- pemutar ---------- */
 const audio=new Audio();audio.preload='auto';
 const pre=new Audio();pre.preload='auto';
-const P={plan:[],i:0,state:'idle',s:null,from:1,to:1,mode:'ayat',timer:0,err:'',shown:0,resume:''};
+const P={plan:[],i:0,state:'idle',s:null,from:1,to:1,mode:'ayat',timer:0,err:'',shown:0,resume:'',tok:0};
 const url=(q,s,a)=>`https://everyayah.com/data/${q}/${pad(s)}${pad(a)}.mp3`;
+
+/* ---------- audio offline ---------- */
+const HAS_CACHE=typeof caches!=='undefined';
+const AC=q=>'hafal-audio-'+q;
+const OFF={};
+const D={q:'',state:'idle',done:0,total:0,fail:0,abort:false,msg:'',del:'',storage:''};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const offCount=q=>OFF[q]?OFF[q].size:0;
+const isOff=(q,s,a)=>!!(OFF[q]&&OFF[q].has(mk(s,a)));
+async function refreshOff(q){
+  const set=new Set();
+  try{
+    if(HAS_CACHE&&await caches.has(AC(q))){
+      const c=await caches.open(AC(q));
+      for(const r of await c.keys()){const m=r.url.match(/\/(\d{3})(\d{3})\.mp3$/);if(m)set.add(mk(+m[1],+m[2]))}
+    }
+  }catch(e){}
+  OFF[q]=set;
+  if(V.s!==null&&$('#planInfo'))syncPanel();
+}
+async function refreshStorage(){
+  try{
+    if(navigator.storage&&navigator.storage.estimate){
+      const e=await navigator.storage.estimate();
+      D.storage=`Ruang terpakai aplikasi ini ${Math.round((e.usage||0)/1048576)} MB dari sekitar ${Math.round((e.quota||0)/1048576)} MB yang boleh dipakai.`;
+    }
+  }catch(err){}
+}
+async function srcFor(q,s,a){
+  const u=url(q,s,a);
+  try{
+    const c=await caches.open(AC(q)),r=await c.match(u);
+    if(r)return{src:URL.createObjectURL(await r.blob()),blob:true};
+  }catch(e){}
+  return{src:u,blob:false};
+}
+function setSrc(el,o){
+  if(el._u){URL.revokeObjectURL(el._u);el._u=''}
+  if(o.blob)el._u=o.src;
+  el.src=o.src;
+}
+function freeAudio(){if(audio._u){URL.revokeObjectURL(audio._u);audio._u=''}}
+async function dlRun(q){
+  if(D.state==='running')return;
+  if(!HAS_CACHE){D.state='error';D.msg='Browser ini belum mendukung penyimpanan offline.';paintDl(true);return}
+  Object.assign(D,{q,state:'running',done:0,total:TOTAL,fail:0,abort:false,msg:'',del:''});
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+  paintDl(true);
+  await refreshOff(q);
+  const have=OFF[q],todo=[];
+  DATA.forEach(s=>s.v.forEach((_,i)=>{if(!have.has(mk(s.n,i+1)))todo.push([s.n,i+1])}));
+  D.done=TOTAL-todo.length;
+  let c;
+  try{c=await caches.open(AC(q))}
+  catch(e){D.state='error';D.msg='Penyimpanan tidak bisa dibuka di browser ini.';paintDl(true);return}
+  let idx=0;
+  async function worker(){
+    while(!D.abort){
+      const j=idx++;if(j>=todo.length)return;
+      const n=todo[j][0],a=todo[j][1],u=url(q,n,a);
+      let ok=false;
+      for(let t=0;t<3&&!ok&&!D.abort;t++){
+        try{
+          const r=await fetch(u);
+          if(!r.ok){if(r.status===404)break;throw new Error('http')}
+          await c.put(u,r);ok=true;
+        }catch(e){
+          if(e&&e.name==='QuotaExceededError'){D.abort=true;D.state='quota';break}
+          if(navigator.onLine===false){D.abort=true;D.state='offline';break}
+          await sleep(500*(t+1));
+        }
+      }
+      if(ok){have.add(mk(n,a));D.done++}else if(!D.abort)D.fail++;
+      paintDl(false);
+    }
+  }
+  await Promise.all([worker(),worker(),worker()]);
+  if(D.state==='running')D.state=D.abort?'canceled':(D.fail?'partial':'done');
+  await refreshStorage();
+  paintDl(true);
+  if(V.s!==null&&$('#planInfo'))syncPanel();
+}
+async function dlRemove(q){
+  try{if(HAS_CACHE)await caches.delete(AC(q))}catch(e){}
+  OFF[q]=new Set();D.del='';
+  if(D.q===q&&D.state!=='running')D.state='idle';
+  await refreshStorage();
+  paintDl(true);
+  if(V.s!==null&&$('#planInfo'))syncPanel();
+}
+function dlMsg(){
+  const m={
+    done:'Selesai. Audio tersimpan di HP ini.',
+    canceled:'Dibatalkan. Ayat yang sudah terunduh tetap tersimpan.',
+    quota:'Ruang penyimpanan penuh. Hapus unduhan lain atau kosongkan ruang di HP, lalu lanjutkan.',
+    offline:'Tidak ada koneksi. Sambungkan internet lalu tekan Lanjutkan unduh.',
+    partial:`${D.fail} ayat gagal diunduh. Tekan Lanjutkan unduh untuk mencoba lagi.`
+  };
+  return D.msg||m[D.state]||'';
+}
+function dlHTML(){
+  const rows=QARI.map(q=>{
+    const n=offCount(q.id),run=D.state==='running'&&D.q===q.id;
+    let st;
+    if(run)st=`Mengunduh ${D.done} dari ${D.total} ayat`;
+    else if(n>=TOTAL)st=`Tersimpan, ${TOTAL} ayat`;
+    else if(n>0)st=`${n} dari ${TOTAL} ayat tersimpan`;
+    else st=`Belum diunduh, sekitar ${q.mb} MB`;
+    const pct=run?D.done/D.total:n/TOTAL;
+    let btns='';
+    if(run)btns=`<button type="button" class="btn quiet small" data-act="dlCancel">Batal</button>`;
+    else{
+      if(n<TOTAL)btns+=`<button type="button" class="btn primary small" data-act="dlStart" data-q="${q.id}"${D.state==='running'?' disabled':''}>${n>0?'Lanjutkan unduh':`Unduh (${q.mb} MB)`}</button>`;
+      if(n>0)btns+=D.del===q.id
+        ?`<button type="button" class="btn danger small" data-act="dlDel" data-q="${q.id}">Yakin hapus?</button>`
+        :`<button type="button" class="btn quiet small" data-act="dlDel" data-q="${q.id}">Hapus</button>`;
+    }
+    return `<li class="grp" data-q="${q.id}"><div><strong>${q.name}</strong><span class="dlmeta">${st}</span></div>${meter(pct)}<div class="gbtns">${btns}</div></li>`;
+  }).join('');
+  return `<p class="desc">Simpan murottal di HP supaya bisa diputar tanpa internet, termasuk di mode pesawat. Unduh satu qari yang paling sering dipakai, sebaiknya lewat Wi-Fi.</p>
+  <ul class="grps" id="dlList" style="margin-top:14px">${rows}</ul>
+  <p class="dlmsg" id="dlMsg" role="status">${dlMsg()}</p>
+  <p class="dlstore" id="dlStore">${D.storage||''}</p>`;
+}
+function paintDl(full){
+  const box=$('#dlBox');if(!box)return;
+  if(full){box.innerHTML=dlHTML();return}
+  const li=box.querySelector(`li[data-q="${D.q}"]`);if(!li)return;
+  const s=li.querySelector('.dlmeta'),i=li.querySelector('.meter i');
+  if(s)s.textContent=`Mengunduh ${D.done} dari ${D.total} ayat`;
+  if(i)i.style.width=Math.round(D.done/D.total*100)+'%';
+}
 function statusText(it){
   const s=surah(P.s);let t=`${s.tr} ayat ${it.a}`,d='';
   if(P.mode==='ayat')d=`ulangan ${it.rep} dari ${it.of}`;
@@ -439,19 +578,23 @@ function playAt(i){
   if(i<0)i=0;
   if(i>=P.plan.length){finish();return}
   P.i=i;P.state='playing';P.err='';
-  const it=P.plan[i];
-  audio.src=url(S.qari,P.s,it.a);
-  audio.defaultPlaybackRate=S.rate;audio.playbackRate=S.rate;
-  try{audio.preservesPitch=true}catch(e){}
-  const pr=audio.play();if(pr&&pr.catch)pr.catch(onAudioError);
-  const nx=P.plan[i+1];if(nx&&nx.a!==it.a)pre.src=url(S.qari,P.s,nx.a);
+  const it=P.plan[i],tok=++P.tok,q=S.qari,nx=P.plan[i+1];
+  const go=o=>{
+    if(tok!==P.tok)return;
+    setSrc(audio,o);
+    audio.defaultPlaybackRate=S.rate;audio.playbackRate=S.rate;
+    try{audio.preservesPitch=true}catch(e){}
+    if(P.state==='playing'){const pr=audio.play();if(pr&&pr.catch)pr.catch(onAudioError)}
+    if(nx&&nx.a!==it.a&&!isOff(q,P.s,nx.a))pre.src=url(q,P.s,nx.a);
+  };
+  if(isOff(q,P.s,it.a))srcFor(q,P.s,it.a).then(go);else go({src:url(q,P.s,it.a),blob:false});
   paint();
 }
 function onAudioError(){
   if(P.state==='idle'||P.err)return;
   clearTimeout(P.timer);
   P.state='idle';
-  P.err='Audio tidak bisa dimuat. Periksa koneksi internet. Jika halaman ini dibuka lewat artifact dan audio tetap gagal, pakai versi file HTML-nya langsung di browser.';
+  P.err=navigator.onLine===false?'Tidak ada internet dan ayat ini belum diunduh. Buka tab Offline untuk mengunduh audio qari ini.':'Audio tidak bisa dimuat. Periksa koneksi internet, atau unduh audio di tab Offline.';
   paint();
 }
 audio.addEventListener('error',onAudioError);
@@ -474,11 +617,11 @@ function resume(){
 }
 function stop(){
   clearTimeout(P.timer);P.state='idle';P.err='';
-  audio.pause();audio.removeAttribute('src');
+  audio.pause();audio.removeAttribute('src');P.tok++;freeAudio();
   P.plan=[];paint();
 }
 function finish(){
-  clearTimeout(P.timer);P.state='idle';audio.pause();P.plan=[];paint();
+  clearTimeout(P.timer);P.state='idle';audio.pause();P.tok++;freeAudio();P.plan=[];paint();
 }
 function paint(){
   const bar=$('#bar'),active=P.state!=='idle'&&P.plan.length>0;
@@ -499,11 +642,11 @@ function paint(){
 }
 
 /* ---------- tirukan dan bandingkan ---------- */
-const T={a:0,state:'idle',rec:null,stream:null,chunks:[],url:'',timer:0,t0:0};
+const T={a:0,state:'idle',rec:null,stream:null,chunks:[],url:'',timer:0,t0:0,exTok:0};
 const exA=new Audio(),mineA=new Audio();
 let seqTimer=0;
 function tryMsg(m,bad){const e=$('#tryMsg');if(e){e.textContent=m||'';e.style.color=bad?'var(--bad)':''}}
-function tryStopAudio(){clearTimeout(seqTimer);exA.pause();mineA.pause()}
+function tryStopAudio(){clearTimeout(seqTimer);T.exTok++;exA.pause();mineA.pause()}
 function closeTry(){
   tryStopAudio();
   if(T.rec&&T.rec.state!=='inactive'){try{T.rec.onstop=null;T.rec.stop()}catch(e){}}
@@ -541,10 +684,15 @@ function openTry(b,a){
 }
 function playEx(rate,then){
   tryStopAudio();
-  exA.src=url(S.qari,V.s,T.a);exA.defaultPlaybackRate=rate;exA.playbackRate=rate;
+  const a=T.a,q=S.qari,tok=++T.exTok;
   exA.onended=then||null;
-  exA.onerror=()=>tryMsg('Audio contoh tidak bisa dimuat. Periksa koneksi internet.',true);
-  const p=exA.play();if(p&&p.catch)p.catch(()=>tryMsg('Audio contoh tidak bisa diputar.',true));
+  exA.onerror=()=>tryMsg(navigator.onLine===false?'Tidak ada internet dan audio ini belum diunduh.':'Audio contoh tidak bisa dimuat. Periksa koneksi internet.',true);
+  const go=o=>{
+    if(tok!==T.exTok)return;
+    setSrc(exA,o);exA.defaultPlaybackRate=rate;exA.playbackRate=rate;
+    const p=exA.play();if(p&&p.catch)p.catch(()=>tryMsg('Audio contoh tidak bisa diputar.',true));
+  };
+  if(isOff(q,V.s,a))srcFor(q,V.s,a).then(go);else go({src:url(q,V.s,a),blob:false});
 }
 function playMine(){
   mineA.currentTime=0;mineA.onended=null;
@@ -593,7 +741,20 @@ function groupEach(b,fn){
 }
 const ACT={
   install(){if(deferredInstall){const d=deferredInstall;deferredInstall=null;const ib=$('#install');if(ib)ib.hidden=true;d.prompt()}},
-  tab(b){V.tab=b.dataset.v;render()},
+  tab(b){
+    V.tab=b.dataset.v;render();
+    if(V.tab==='dl'){
+      Promise.all(QARI.map(q=>(D.state==='running'&&D.q===q.id)?0:refreshOff(q.id))).then(refreshStorage).then(()=>paintDl(true));
+    }
+  },
+  dlStart(b){dlRun(b.dataset.q)},
+  dlCancel(){D.abort=true},
+  dlDel(b){
+    const q=b.dataset.q;
+    if(D.del===q){dlRemove(q);return}
+    D.del=q;paintDl(true);
+    setTimeout(()=>{if(D.del===q){D.del='';paintDl(true)}},4000);
+  },
   sort(b){S.sort=b.dataset.v;save();render()},
   open(b){openSurah(+b.dataset.s)},
   back(){V.s=null;render();window.scrollTo(0,0)},
@@ -659,7 +820,7 @@ const BIND={
   from(t){R.from=+t.value;if(R.to<R.from){R.to=R.from;$('#selTo').value=R.to}syncPanel()},
   to(t){R.to=+t.value;if(R.from>R.to){R.from=R.to;$('#selFrom').value=R.from}syncPanel()},
   gap(t){S.gap=t.value;save()},
-  qari(t){S.qari=t.value;save()}
+  qari(t){S.qari=t.value;save();refreshOff(S.qari);syncPanel()}
 };
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');
@@ -672,6 +833,7 @@ document.addEventListener('keydown',e=>{
 document.addEventListener('change',e=>{
   const t=e.target;if(t.dataset&&t.dataset.bind&&BIND[t.dataset.bind])BIND[t.dataset.bind](t);
 });
+refreshOff(S.qari);
 render();
 })();
 </script>

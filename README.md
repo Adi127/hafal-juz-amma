@@ -3,7 +3,7 @@
 Aplikasi web (PWA) untuk menghafal Juz 30: putar murottal per ayat dengan pengulangan, rekam dan bandingkan bacaan, tandai ayat yang sudah hafal, dan ikuti jadwal muraja'ah.
 
 - Pola pengulangan: per ayat, rentang, dan rantai
-- Enam pilihan qari, audio diputar dari everyayah.com (butuh internet)
+- Enam pilihan qari, audio dari everyayah.com, bisa diunduh ke HP (tab Offline) untuk dipakai tanpa internet
 - Progres hafalan tersimpan di browser perangkat masing-masing, dengan kode cadangan untuk pindah perangkat
 - Halaman, teks, dan font tetap terbuka tanpa internet setelah dipasang
 

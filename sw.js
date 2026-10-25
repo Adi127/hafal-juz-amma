@@ -2,7 +2,7 @@
    Menyimpan halaman dan font supaya aplikasi terbuka tanpa internet.
    Audio murottal tidak disimpan, jadi tetap butuh internet untuk memutar.
    Setiap kali index.html diubah, naikkan angka versi di bawah. */
-const CACHE = 'hafal-juz-amma-v1';
+const CACHE = 'hafal-juz-amma-v2';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-180.png'];
 
 self.addEventListener('install', (e) => {
@@ -12,7 +12,7 @@ self.addEventListener('install', (e) => {
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k.startsWith('hafal-juz-amma-') && k !== CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
