@@ -467,6 +467,28 @@ function setSrc(el,o){
   el.src=o.src;
 }
 function freeAudio(){if(audio._u){URL.revokeObjectURL(audio._u);audio._u=''}}
+
+/* ---------- pengisi jeda senyap ---------- */
+/* Selama sesi berjalan, satu audio nyaris tak terdengar diputar berulang supaya browser
+   tetap menganggap halaman sedang memutar suara dan tidak membekukannya saat jeda antar ayat. */
+let keepEl=null;
+function tinyWav(sec,rate){
+  const n=Math.floor(sec*rate),buf=new ArrayBuffer(44+n*2),v=new DataView(buf);
+  const w=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};
+  w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVE');w(12,'fmt ');
+  v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,rate,true);v.setUint32(28,rate*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);
+  w(36,'data');v.setUint32(40,n*2,true);
+  for(let i=0;i<n;i++)v.setInt16(44+i*2,i%2?8:-8,true);
+  return new Blob([buf],{type:'audio/wav'});
+}
+function keepOn(){
+  try{
+    if(!keepEl){keepEl=new Audio();keepEl.loop=true;keepEl.src=URL.createObjectURL(tinyWav(1,8000))}
+    const p=keepEl.play();if(p&&p.catch)p.catch(()=>{});
+  }catch(e){}
+}
+function keepOff(){try{if(keepEl)keepEl.pause()}catch(e){}}
 async function dlRun(q){
   if(D.state==='running')return;
   if(!HAS_CACHE){D.state='error';D.msg='Browser ini belum mendukung penyimpanan offline.';paintDl(true);return}
@@ -571,6 +593,7 @@ function gapMs(){
 function startPlay(){
   closeTry();P.mode=S.mode;P.s=V.s;P.from=R.from;P.to=R.to;P.plan=buildPlan(S.mode,R.from,R.to,S.reps);P.err='';P.shown=0;
   if(!P.plan.length)return;
+  keepOn();
   playAt(0);
 }
 function playAt(i){
@@ -593,7 +616,7 @@ function playAt(i){
 function onAudioError(){
   if(P.state==='idle'||P.err)return;
   clearTimeout(P.timer);
-  P.state='idle';
+  P.state='idle';keepOff();
   P.err=navigator.onLine===false?'Tidak ada internet dan ayat ini belum diunduh. Buka tab Offline untuk mengunduh audio qari ini.':'Audio tidak bisa dimuat. Periksa koneksi internet, atau unduh audio di tab Offline.';
   paint();
 }
@@ -603,25 +626,26 @@ audio.addEventListener('ended',()=>{
   const next=P.i+1;
   if(next>=P.plan.length){finish();return}
   const g=gapMs();
-  if(g>0){P.state='gap';P.timer=setTimeout(()=>playAt(next),g)}else playAt(next);
+  if(g>0){P.state='gap';P.timer=setTimeout(()=>playAt(next),g);paint()}else playAt(next);
 });
 function pause(){
   if(P.state==='playing'){audio.pause();P.state='paused';P.resume='audio'}
   else if(P.state==='gap'){clearTimeout(P.timer);P.state='paused';P.resume='next'}
-  paint();
+  keepOff();paint();
 }
 function resume(){
   if(P.state!=='paused')return;
+  keepOn();
   if(P.resume==='next')playAt(P.i+1);
   else{P.state='playing';const pr=audio.play();if(pr&&pr.catch)pr.catch(onAudioError);paint()}
 }
 function stop(){
   clearTimeout(P.timer);P.state='idle';P.err='';
-  audio.pause();audio.removeAttribute('src');P.tok++;freeAudio();
+  audio.pause();audio.removeAttribute('src');P.tok++;freeAudio();keepOff();
   P.plan=[];paint();
 }
 function finish(){
-  clearTimeout(P.timer);P.state='idle';audio.pause();P.tok++;freeAudio();P.plan=[];paint();
+  clearTimeout(P.timer);P.state='idle';audio.pause();P.tok++;freeAudio();keepOff();P.plan=[];paint();
 }
 function paint(){
   const bar=$('#bar'),active=P.state!=='idle'&&P.plan.length>0;
